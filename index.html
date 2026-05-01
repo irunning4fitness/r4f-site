@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R4F — Diagnóstico Inicial de Atletas</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --r4f-dark:   #0d3461;
+    --r4f-blue:   #4a9fd4;
+    --r4f-green:  #4db825;
+    --r4f-orange: #f07820;
+    --r4f-bg:     #f4f6f9;
+    --r4f-card:   #ffffff;
+    --r4f-border: #dde3ec;
+    --r4f-muted:  #7a8ba0;
+    --r4f-text:   #1a2a3a;
+    /* aliases para compatibilidad con código existente */
+    --r4f-black:        #f4f6f9;
+    --r4f-card-alt:     #ffffff;
+    --r4f-border-strong:#c8d0dc;
+    --r4f-orange-light: #f5943a;
+    --r4f-orange-dim:   rgba(240,120,32,0.10);
+    --r4f-success:      #4db825;
+    --r4f-warning:      #f07820;
+    --r4f-danger:       #e53e3e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--r4f-bg); color: var(--r4f-text); min-height: 100vh; line-height: 1.6; }
+
+  header { border-bottom: 1px solid var(--r4f-border); padding: 0 2rem; height: 52px; display: flex; align-items: center; gap: 1rem; background: var(--r4f-dark); }
+  .logo-mark { width: 34px; height: 34px; background: var(--r4f-orange); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-mark svg { width: 20px; height: 20px; fill: white; }
+  .logo-text h1 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: white; letter-spacing: -0.01em; }
+  .logo-text p { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.12em; }
+  .header-badge { margin-left: auto; background: rgba(240,120,32,0.18); border: 1px solid rgba(240,120,32,0.35); color: #f5943a; font-size: 0.68rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .app { display: grid; grid-template-columns: 420px 1fr; min-height: calc(100vh - 92px); }
+
+  .panel-left { border-right: 1px solid var(--r4f-border); background: var(--r4f-card); display: flex; flex-direction: column; }
+  .panel-title { padding: 0.9rem 1.5rem 0.65rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--r4f-muted); border-bottom: 1px solid var(--r4f-border); }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--r4f-border); }
+  .tab { flex: 1; padding: 0.75rem 1rem; background: none; border: none; color: var(--r4f-muted); font-family: 'DM Sans', sans-serif; font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: all 0.15s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: var(--r4f-dark); border-bottom-color: var(--r4f-orange); }
+  .tab:hover:not(.active) { color: var(--r4f-text); }
+
+  .tab-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+  .tab-content.active { display: flex; }
+
+  textarea { flex: 1; background: transparent; border: none; color: var(--r4f-text); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; line-height: 1.7; padding: 1.25rem 1.5rem; resize: none; outline: none; min-height: 380px; }
+  textarea::placeholder { color: var(--r4f-muted); }
+
+  .panel-footer { border-top: 1px solid var(--r4f-border); padding: 0.85rem 1.5rem; display: flex; gap: 0.65rem; align-items: center; flex-shrink: 0; background: var(--r4f-card); }
+
+  .btn-generate { flex: 1; background: var(--r4f-orange); color: white; border: none; border-radius: 8px; padding: 0.65rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.84rem; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .btn-generate:hover { background: #d96a15; transform: translateY(-1px); }
+  .btn-generate:disabled { background: var(--r4f-muted); cursor: not-allowed; transform: none; }
+  .btn-clear { background: none; border: 1px solid var(--r4f-border); color: var(--r4f-muted); border-radius: 8px; padding: 0.65rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+  .btn-clear:hover { color: var(--r4f-text); border-color: var(--r4f-text); }
+
+  .panel-right { display: flex; flex-direction: column; background: var(--r4f-bg); }
+  .report-header { padding: 0.85rem 2rem; border-bottom: 1px solid var(--r4f-border); display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: var(--r4f-card); }
+  .report-header-left { display: flex; align-items: center; gap: 0.75rem; }
+  .report-status { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; padding: 0.22rem 0.6rem; border-radius: 20px; }
+  .status-idle { background: rgba(122,139,160,0.12); color: var(--r4f-muted); }
+  .status-generating { background: rgba(240,120,32,0.12); color: var(--r4f-orange); }
+  .status-done { background: rgba(77,184,37,0.12); color: var(--r4f-green); }
+  .status-error { background: rgba(229,62,62,0.12); color: var(--r4f-danger); }
+
+  .report-actions { display: flex; gap: 0.5rem; }
+  .btn-export { background: none; border: 1px solid var(--r4f-border); color: var(--r4f-muted); border-radius: 7px; padding: 0 0.85rem; height: 32px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; font-size: 0.73rem; font-weight: 500; }
+  .btn-export:hover { border-color: var(--r4f-orange); color: var(--r4f-orange); }
+
+  .report-body { flex: 1; overflow-y: auto; padding: 2rem; }
+  .empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--r4f-muted); text-align: center; }
+  .empty-icon { width: 64px; height: 64px; border: 1px solid var(--r4f-border); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; background: var(--r4f-card); }
+  .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--r4f-dark); }
+  .empty-state p { font-size: 0.82rem; max-width: 300px; }
+
+  .report-rendered { max-width: 820px; }
+  .report-athlete-header { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--r4f-border); }
+  .athlete-avatar { width: 52px; height: 52px; background: rgba(240,120,32,0.10); border: 1px solid rgba(240,120,32,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--r4f-orange); flex-shrink: 0; }
+  .athlete-meta h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--r4f-dark); margin-bottom: 0.2rem; }
+  .athlete-meta p { font-size: 0.78rem; color: var(--r4f-muted); }
+
+  .health-alert { background: rgba(229,62,62,0.06); border: 1px solid rgba(229,62,62,0.25); border-left: 3px solid var(--r4f-danger); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none; }
+  .health-alert.visible { display: block; }
+  .health-alert-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--r4f-danger); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem; }
+  .health-alert p { font-size: 0.82rem; color: #c0392b; line-height: 1.6; }
+
+  .report-section { margin-bottom: 1.5rem; background: var(--r4f-card); border: 1px solid var(--r4f-border); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(13,52,97,0.06); }
+  .section-header { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--r4f-border); display: flex; align-items: center; gap: 0.75rem; background: #f8fafc; }
+  .section-num { width: 22px; height: 22px; background: rgba(240,120,32,0.10); border: 1px solid rgba(240,120,32,0.2); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: var(--r4f-orange); flex-shrink: 0; }
+  .section-title { font-size: 0.78rem; font-weight: 700; color: var(--r4f-dark); text-transform: uppercase; letter-spacing: 0.08em; }
+  .section-body { padding: 1.1rem 1.25rem; font-size: 0.85rem; color: var(--r4f-text); line-height: 1.75; }
+  .section-body p { margin-bottom: 0.75rem; }
+  .section-body p:last-child { margin-bottom: 0; }
+  .section-body ul { padding-left: 1.2rem; margin: 0.5rem 0 0.75rem; }
+  .section-body ul li { margin-bottom: 0.4rem; }
+  .section-body strong { color: var(--r4f-dark); font-weight: 600; }
+
+  .maf-display { background: var(--r4f-dark); border-radius: 8px; padding: 1rem 1.25rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 1.5rem; }
+  .maf-value { text-align: center; }
+  .maf-value .label { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.5); margin-bottom: 0.2rem; }
+  .maf-value .number { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--r4f-orange); line-height: 1; }
+  .maf-value .unit { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
+  .maf-divider { width: 1px; height: 44px; background: rgba(255,255,255,0.1); }
+
+  .disclaimer { margin-top: 1.5rem; padding: 0.9rem 1.1rem; background: var(--r4f-card); border: 1px solid var(--r4f-border); border-radius: 8px; font-size: 0.75rem; color: var(--r4f-muted); line-height: 1.6; }
+
+  .streaming-indicator { display: flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; font-size: 0.78rem; color: var(--r4f-blue); }
+  .dot-pulse { display: flex; gap: 4px; }
+  .dot-pulse span { width: 6px; height: 6px; background: var(--r4f-blue); border-radius: 50%; animation: pulse 1.2s infinite; }
+  .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+  #raw-output { padding: 0 2rem 2rem; font-size: 0.84rem; line-height: 1.8; color: var(--r4f-text); white-space: pre-wrap; display: none; }
+
+  .pdf-upload-zone { margin: 0.75rem 1.5rem 0; border: 1.5px dashed var(--r4f-border); border-radius: 8px; padding: 0.9rem 1rem; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; transition: all 0.2s; background: #fafbfd; }
+  .pdf-upload-zone:hover, .pdf-upload-zone.dragover { border-color: var(--r4f-blue); background: #f0f7ff; }
+  .pdf-upload-zone.loaded { border-color: var(--r4f-green); background: rgba(77,184,37,0.06); }
+  .pdf-icon { width: 32px; height: 32px; background: rgba(240,120,32,0.10); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem; }
+  .pdf-upload-zone.loaded .pdf-icon { background: rgba(77,184,37,0.12); }
+  .pdf-upload-text { flex: 1; }
+  .pdf-upload-text strong { display: block; font-size: 0.78rem; font-weight: 600; color: var(--r4f-text); margin-bottom: 0.1rem; }
+  .pdf-upload-text span { font-size: 0.7rem; color: var(--r4f-muted); }
+  .pdf-processing { display: none; align-items: center; gap: 0.5rem; padding: 0.6rem 1.5rem; font-size: 0.75rem; color: var(--r4f-blue); }
+  #pdf-input { display: none; }
+
+  .zona-field { margin-bottom: 1rem; }
+  .zona-field label { display: block; font-size: 0.75rem; color: var(--r4f-muted); margin-bottom: 0.4rem; line-height: 1.5; }
+  .zona-field input[type="number"] { width: 100%; background: #fafbfd; border: 1px solid var(--r4f-border); border-radius: 7px; padding: 0.6rem 0.85rem; color: var(--r4f-text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; outline: none; transition: border-color 0.2s; }
+  .zona-field input[type="number"]:focus { border-color: var(--r4f-blue); }
+  .zona-radio { display: flex; gap: 0.5rem; }
+  .radio-btn { flex: 1; padding: 0.45rem; background: none; border: 1px solid var(--r4f-border); border-radius: 6px; color: var(--r4f-muted); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+  .radio-btn.active { background: rgba(240,120,32,0.10); border-color: rgba(240,120,32,0.35); color: var(--r4f-orange); font-weight: 600; }
+
+  .zona-row { display: grid; grid-template-columns: 60px 1fr 1fr; gap: 0.5rem; align-items: center; padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.75rem; }
+  .zona-row.z1 { background: rgba(77,184,37,0.07); border: 1px solid rgba(77,184,37,0.2); }
+  .zona-row.z2 { background: rgba(77,184,37,0.12); border: 1px solid rgba(77,184,37,0.25); }
+  .zona-row.z3 { background: rgba(240,120,32,0.07); border: 1px solid rgba(240,120,32,0.18); }
+  .zona-row.z4 { background: rgba(240,120,32,0.12); border: 1px solid rgba(240,120,32,0.25); }
+  .zona-row.z5 { background: rgba(229,62,62,0.07); border: 1px solid rgba(229,62,62,0.2); }
+  .zona-label { font-weight: 600; }
+  .zona-row.z1 .zona-label { color: #3a8f1a; }
+  .zona-row.z2 .zona-label { color: #4db825; }
+  .zona-row.z3 .zona-label { color: #d96a15; }
+  .zona-row.z4 .zona-label { color: var(--r4f-orange); }
+  .zona-row.z5 .zona-label { color: var(--r4f-danger); }
+  .zona-range { color: var(--r4f-text); font-weight: 500; }
+  .zona-pct { color: var(--r4f-muted); font-size: 0.7rem; }
+
+  .zonas-report-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.5rem; }
+  .zonas-report-table th { text-align: left; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--r4f-muted); padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--r4f-border); }
+  .zonas-report-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--r4f-border); color: var(--r4f-text); vertical-align: top; }
+  .zonas-report-table tr:last-child td { border-bottom: none; }
+  .zona-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.7rem; }
+
+  .submission-card { background: var(--r4f-card); border: 1px solid var(--r4f-border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; transition: all 0.15s; box-shadow: 0 1px 2px rgba(13,52,97,0.05); }
+  .submission-card:hover { border-color: var(--r4f-orange); box-shadow: 0 2px 8px rgba(240,120,32,0.12); }
+  .submission-card .sub-name { font-size:0.85rem;font-weight:600;color:var(--r4f-dark);margin-bottom:0.2rem; }
+  .submission-card .sub-date { font-size:0.7rem;color:var(--r4f-muted); }
+  .submission-card .sub-actions { display:flex;gap:0.5rem;margin-top:0.65rem; }
+  .btn-load { flex:1;background:var(--r4f-orange);color:white;border:none;border-radius:6px;padding:0.4rem 0.75rem;font-family:'DM Sans',sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.15s; }
+  .btn-load:hover { background:#d96a15; }
+  .btn-delete { background:none;border:1px solid var(--r4f-border);color:var(--r4f-muted);border-radius:6px;padding:0.4rem 0.6rem;font-size:0.75rem;cursor:pointer;transition:all 0.15s; }
+  .btn-delete:hover { color:var(--r4f-danger);border-color:var(--r4f-danger); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--r4f-border); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--r4f-border); }
+    textarea { min-height: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24"><path d="M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z"/></svg>
+  </div>
+  <div class="logo-text">
+    <h1>Running.4.Fitness</h1>
+    <p>Sistema de Diagnóstico · Método Maffetone</p>
+  </div>
+  <div class="header-badge">R4F Diagnóstico v2.0</div>
+  <button class="btn-export" onclick="toggleInbox()" style="margin-left:0.5rem;position:relative">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+    Bandeja
+    <span id="inbox-count" style="display:none;position:absolute;top:-6px;right:-6px;background:var(--r4f-orange);color:white;font-size:0.6rem;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center">0</span>
+  </button>
+</header>
+
+<!-- R4F TOOLS NAV -->
+<div style="background:#0d3461;border-bottom:1px solid rgba(255,255,255,0.08);padding:0 2rem;display:flex;align-items:center;gap:0.5rem;height:40px;overflow-x:auto;">
+  <span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:rgba(255,255,255,0.35);white-space:nowrap;margin-right:0.5rem;">Herramientas</span>
+  <a href="index.html" style="text-decoration:none;display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.85rem;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap;background:rgba(240,120,32,0.20);border:1px solid rgba(240,120,32,0.4);color:#f07820;">
+    🏥 Diagnóstico Inicial
+  </a>
+  <a href="zonas.html" style="text-decoration:none;display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.85rem;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);transition:all 0.2s;" onmouseover="this.style.background='rgba(77,184,37,0.15)';this.style.borderColor='rgba(77,184,37,0.4)';this.style.color='#4db825';" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='rgba(255,255,255,0.6)';">
+    💓 Zonas de Entrenamiento
+  </a>
+  <a href="sweat-test-r4f.html" style="text-decoration:none;display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.85rem;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);transition:all 0.2s;" onmouseover="this.style.background='rgba(74,159,212,0.15)';this.style.borderColor='rgba(74,159,212,0.4)';this.style.color='#4a9fd4';" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='rgba(255,255,255,0.6)';">
+    💧 Test de Sudoración
+  </a>
+  <a href="planes.html" style="text-decoration:none;display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.85rem;border-radius:20px;font-size:0.72rem;font-weight:600;white-space:nowrap;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);transition:all 0.2s;" onmouseover="this.style.background='rgba(240,120,32,0.15)';this.style.borderColor='rgba(240,120,32,0.4)';this.style.color='#f07820';" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='rgba(255,255,255,0.6)';">
+    📋 Planes
+  </a>
+</div>
+
+<!-- INBOX MODAL -->
+<div id="inbox-modal" style="display:none;position:fixed;top:107px;right:0;width:380px;height:calc(100vh - 107px);background:var(--r4f-dark);border-left:1px solid var(--r4f-border);z-index:100;flex-direction:column">
+  <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--r4f-border);display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--r4f-muted)">Formularios Recibidos</span>
+    <button onclick="toggleInbox()" style="background:none;border:none;color:var(--r4f-muted);cursor:pointer;font-size:1.1rem">✕</button>
+  </div>
+  <div id="inbox-list" style="flex:1;overflow-y:auto;padding:0.75rem"></div>
+</div>
+
+<div class="app">
+  <div class="panel-left">
+    <div class="panel-title">Información del Atleta</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('inventario')">Inventario</button>
+      <button class="tab" onclick="switchTab('trainingpeaks')">Training Peaks</button>
+      <button class="tab" onclick="switchTab('zonas')">Zonas FC</button>
+    </div>
+
+    <!-- TAB: INVENTARIO -->
+    <div class="tab-content active" id="tab-inventario">
+      <input type="file" id="pdf-input" accept=".pdf" onchange="handlePdfFile(this.files[0])">
+      <div class="pdf-upload-zone" id="pdf-zone" onclick="document.getElementById('pdf-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="pdf-icon" id="pdf-icon">📄</div>
+        <div class="pdf-upload-text">
+          <strong id="pdf-label">Subir PDF del atleta</strong>
+          <span id="pdf-sub">Haz clic o arrastra el archivo aquí · .pdf</span>
+        </div>
+      </div>
+      <div class="pdf-processing" id="pdf-processing">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        Extrayendo texto del PDF...
+      </div>
+      <textarea id="inventario" placeholder="Pega aquí el inventario del corredor, o sube el PDF arriba:
+
+• Datos personales (nombre, edad, sexo)
+• Antecedentes de salud y medicamentos
+• Historial de lesiones
+• Hábitos de sueño y nivel de estrés
+• Registro alimentario
+• Historial de carreras y marcas personales
+• Objetivos de entrenamiento
+• Volumen semanal habitual y ritmos"></textarea>
+    </div>
+
+    <!-- TAB: TRAINING PEAKS -->
+    <div class="tab-content" id="tab-trainingpeaks">
+      <textarea id="trainingpeaks" placeholder="Pega aquí los datos de Training Peaks (opcional):
+
+• CTL actual, ATL, TSB
+• Zonas de frecuencia cardíaca
+• Resumen de sesiones recientes
+• Volumen semanal promedio
+• Ritmos y FC promedio en rodajes
+• Tendencias de carga"></textarea>
+    </div>
+
+    <!-- TAB: ZONAS FC -->
+    <div class="tab-content" id="tab-zonas">
+      <div style="padding:1rem 1.5rem;overflow-y:auto;flex:1">
+        <p style="font-size:0.72rem;color:var(--r4f-muted);margin-bottom:1rem">Completa los datos para calcular las zonas de FC. Se incluirán automáticamente en el reporte.</p>
+
+        <div class="zona-field">
+          <label>Edad del atleta</label>
+          <input type="number" id="z-edad" min="10" max="90" placeholder="ej. 42" oninput="calcularZonas()">
+        </div>
+        <div class="zona-field">
+          <label>¿Ha tenido enfermedad/lesión >3 semanas en el último año o toma medicamentos?</label>
+          <div class="zona-radio">
+            <button class="radio-btn active" onclick="setRadio('z-q1','Si',this)">Sí</button>
+            <button class="radio-btn" onclick="setRadio('z-q1','No',this)">No</button>
+          </div>
+          <input type="hidden" id="z-q1" value="Si">
+        </div>
+        <div class="zona-field">
+          <label>¿Más de dos resfriados/lesiones >3 días en el último año?</label>
+          <div class="zona-radio">
+            <button class="radio-btn active" onclick="setRadio('z-q2','Si',this)">Sí</button>
+            <button class="radio-btn" onclick="setRadio('z-q2','No',this)">No</button>
+          </div>
+          <input type="hidden" id="z-q2" value="Si">
+        </div>
+        <div class="zona-field">
+          <label>¿Ha entrenado constantemente sin problemas durante los últimos dos años?</label>
+          <div class="zona-radio">
+            <button class="radio-btn" onclick="setRadio('z-q3','Si',this)">Sí</button>
+            <button class="radio-btn active" onclick="setRadio('z-q3','No',this)">No</button>
+          </div>
+          <input type="hidden" id="z-q3" value="No">
+        </div>
+        <div class="zona-field">
+          <label>¿Ha experimentado progresos constantes durante los últimos 12 meses?</label>
+          <div class="zona-radio">
+            <button class="radio-btn active" onclick="setRadio('z-q4','Si',this)">Sí</button>
+            <button class="radio-btn" onclick="setRadio('z-q4','No',this)">No</button>
+          </div>
+          <input type="hidden" id="z-q4" value="Si">
+        </div>
+        <div class="zona-field">
+          <label>¿Tiene 65 años o más?</label>
+          <div class="zona-radio">
+            <button class="radio-btn" onclick="setRadio('z-q5','Si',this)">Sí</button>
+            <button class="radio-btn active" onclick="setRadio('z-q5','No',this)">No</button>
+          </div>
+          <input type="hidden" id="z-q5" value="No">
+        </div>
+        <div class="zona-field">
+          <label>¿Tiene 16 años o menos?</label>
+          <div class="zona-radio">
+            <button class="radio-btn" onclick="setRadio('z-q6','Si',this)">Sí</button>
+            <button class="radio-btn active" onclick="setRadio('z-q6','No',this)">No</button>
+          </div>
+          <input type="hidden" id="z-q6" value="No">
+        </div>
+
+        <div id="zonas-preview" style="display:none;margin-top:1rem">
+          <div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--r4f-muted);margin-bottom:0.75rem">Vista previa de zonas</div>
+          <div id="maf-preview-box" style="background:var(--r4f-orange-dim);border:1px solid rgba(232,98,42,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.75rem;display:flex;gap:1.5rem;align-items:center">
+            <div>
+              <div style="font-size:0.6rem;color:var(--r4f-muted);text-transform:uppercase;letter-spacing:0.1em">MAF HR</div>
+              <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--r4f-orange)" id="maf-preview-val">—</div>
+            </div>
+            <div style="width:1px;height:36px;background:var(--r4f-border)"></div>
+            <div style="font-size:0.75rem;color:var(--r4f-muted)" id="maf-ajuste-txt"></div>
+          </div>
+          <div id="zonas-tabla"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-footer">
+      <button class="btn-clear" onclick="clearInputs()">Limpiar</button>
+      <button class="btn-generate" id="btn-gen" onclick="generateReport()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Generar Diagnóstico
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+    <div class="report-header">
+      <div class="report-header-left">
+        <span style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--r4f-muted)">Reporte</span>
+        <span class="report-status status-idle" id="status-badge">En espera</span>
+      </div>
+      <div class="report-actions">
+        <button class="btn-export" onclick="copyReport()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar
+        </button>
+        <button class="btn-export" onclick="printReport()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Exportar PDF
+        </button>
+      </div>
+    </div>
+    <div class="report-body" id="report-body">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">🏃</div>
+        <h3>Sin diagnóstico generado</h3>
+        <p>Ingresa el inventario del corredor y haz clic en "Generar Diagnóstico".</p>
+      </div>
+      <div class="streaming-indicator" id="streaming-indicator" style="display:none">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        Analizando datos del atleta...
+      </div>
+      <div id="raw-output"></div>
+      <div id="report-rendered" class="report-rendered" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── SUPABASE CONFIG ──
+const SUPABASE_URL = 'https://prrznnyrjsllklhtlpuv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_EEaVS0iNzEhkg7whEWuwYw_wJsPvz_o';
+
+// ── STATE ──
+let zonasData = null;
+let currentReportText = '';
+let inboxOpen = false;
+
+// ── SYSTEM PROMPT ──
+const SYSTEM_PROMPT = `Eres el asistente de diagnóstico de Running.4.Fitness (R4F), un programa de entrenamiento de carrera basado en el Método Maffetone. Tu función es analizar la información de cada atleta nuevo y producir un reporte de diagnóstico inicial estructurado, ejecutivo y personalizado, que sirva de base para su plan de entrenamiento.
+
+Todos los reportes se redactan en español, independientemente del idioma en que esté escrita la información de entrada.
+
+FUENTES DE INFORMACIÓN:
+El entrenador te suministrará una o ambas fuentes: (1) Inventario del corredor — formulario con datos personales, antecedentes de salud, hábitos de alimentación, historial de carreras y objetivos. (2) Datos de Training Peaks — historial de sesiones, métricas de carga (CTL, ATL, TSB), zonas de frecuencia cardíaca y patrones de entrenamiento recientes.
+
+INSTRUCCIONES CRÍTICAS PARA EXTRACCIÓN DE DATOS:
+- El inventario puede venir de un PDF con formularios visuales. El texto extraído puede estar desordenado.
+- Tu trabajo es INTERPRETAR y RECONSTRUIR los datos correctos a partir del texto disponible.
+- Si encuentras una Fecha de Nacimiento, calcula la edad actual del atleta (año actual: 2026).
+- Si un campo aparece truncado, infiere que el contenido es limitado y no inventes detalles.
+- NUNCA uses datos de un atleta anterior. Cada reporte debe basarse ÚNICAMENTE en el inventario suministrado.
+- Si un dato no está disponible, indícalo claramente en lugar de inventarlo.
+
+MARCO METODOLÓGICO — MÉTODO MAFFETONE:
+El Método Maffetone centra el entrenamiento en el desarrollo del sistema aeróbico. Sus principios: (1) Desarrollo aeróbico primero: fibras tipo I, mitocondrias y oxidación de grasas son la base de toda resistencia. (2) Eficiencia metabólica: el atleta bien entrenado oxida grasas eficientemente. Señales de sugar-burner: necesidad frecuente de geles, fatiga repentina al cruzar umbrales, hambre excesiva post-entrenamiento. (3) Prevención del sobreentrenamiento: señales incluyen FC en reposo elevada, lesiones recurrentes, fatiga persistente.
+
+CÁLCULO Y AJUSTES DE MAF HR:
+Fórmula base: MAF HR = 180 - edad.
+-10 puntos si: enfermedad reciente (últimas 6 semanas), regreso tras pausa mayor a 3 meses, lesión activa o recurrente, síntomas de sobreentrenamiento, o toma de beta-bloqueantes u otros medicamentos que afectan la respuesta cardíaca.
+NOTA DE CAMPO R4F (observación propia, no documentada por Maffetone): atletas con ansiolíticos o benzodiacepinas presentan FC amortiguada y no logran alcanzar Z2 aunque el esfuerzo sea real; atletas con estimulantes del SNC (ADHD), SNRIs o broncodilatadores exceden Z2 con mínimo esfuerzo. En ambos casos no aplicar ajuste numérico — recomendar calibración por RPE (Z2 = esfuerzo 3-4/10, conversación cómoda).
+-5 puntos si: menos de 2 años de entrenamiento consistente, lesiones recurrentes en el último año, inconsistencia frecuente.
+Sin ajuste: entrenamiento consistente más de 2 años sin lesiones significativas.
++5 puntos si: más de 2 años de entrenamiento aeróbico progresivo, sin lesiones ni enfermedades en el último año, mejora documentada, excelente recuperación.
+Formato: "MAF HR: [valor] bpm | Rango de trabajo: [valor-5] - [valor] bpm". Si el entrenador suministra zonas ya calculadas, usar exactamente esos valores.
+
+NUTRICIÓN MAFFETONE:
+Señales de dependencia de carbohidratos: consumo frecuente de azúcares simples, harinas refinadas; necesidad de comer cada 2-3 horas; antojos de dulce post-ejercicio. Principios: priorizar grasas de calidad (aguacate, aceite de oliva, huevos, frutos secos, pescados grasos); carbohidratos de baja carga glucémica; reducir azúcares añadidos y ultraprocesados. Clasificar como sugar-burner, fat-adapter o intermedio y señalar los 2-3 cambios de mayor impacto.
+
+ANÁLISIS DE TRAINING PEAKS (solo si hay datos):
+CTL: fitness crónico acumulado. ATL: fatiga aguda reciente. TSB = CTL - ATL: negativo fuerte (menor a -20) indica riesgo de sobreentrenamiento; neutro (-10 a +5) es progreso normal; positivo (+10 o más) indica atleta fresco. Cardiac drift: aumento de FC mayor a 5-8 bpm en 45-60 min a ritmo MAF indica que el atleta está por encima de su umbral aeróbico real. TiZ: objetivo MAF es mínimo 80% del volumen en Z1-Z2.
+
+SECCIONES DEL REPORTE (produce exactamente en este orden, usando ## como encabezados):
+
+## RESUMEN EJECUTIVO
+Síntesis de 3 a 5 puntos clave del perfil del atleta: su condición actual, el hallazgo más importante del diagnóstico y la dirección general del plan.
+
+## ⚠️ ALERTA DE CONDICIONES DE SALUD LIMITANTES
+ESTA SECCIÓN ES OBLIGATORIA. Analiza todos los datos de salud disponibles. Identifica cualquier condición que pueda representar un riesgo o limitación. Si no hay condiciones limitantes, indicarlo explícitamente con: "No se identificaron condiciones de salud limitantes en la información suministrada."
+
+## PERFIL DEL ATLETA Y OBJETIVO PRINCIPAL
+Descripción del atleta (edad, experiencia, contexto de salud relevante) y sus metas declaradas.
+
+## FRECUENCIA CARDÍACA MAF OBJETIVO
+Aplicar fórmula y ajustes según criterios definidos arriba. Justificar brevemente el ajuste aplicado.
+
+## CONDICIÓN AERÓBICA GENERAL
+(Solo incluir si hay datos de Training Peaks. Omitir completamente si no hay datos.)
+
+## DIAGNÓSTICO DEL PATRÓN DE ENTRENAMIENTO
+(Solo incluir si hay datos de Training Peaks. Omitir completamente si no hay datos.)
+
+## CONDICIONES GENERALES Y FACTORES DE ADAPTACIÓN
+Factores que pueden afectar la respuesta al entrenamiento: estrés, sueño, lesiones, medicamentos.
+
+## NUTRICIÓN PARA LA BASE AERÓBICA
+Clasificar al atleta y señalar los 2-3 cambios de mayor impacto según principios Maffetone.
+
+## RENDIMIENTO ACTUAL Y LÍNEA BASE
+Mejores marcas personales, volumen semanal promedio, ritmos de entrenamiento.
+
+## PLAN PROPUESTO — FASE DE BASE MAFFETONE
+Objetivos de la fase, distribución de intensidad (mínimo 80% Z1-Z2 / MAF HR), reglas clave, volumen inicial recomendado.
+
+## PROTOCOLOS DE SEGUIMIENTO Y EVALUACIÓN
+Test MAF mensual (3-5 km a MAF HR, registrar ritmo y deriva cardíaca), FC en reposo semanal, chequeos de disposición subjetiva.
+
+## NOTA DE ALCANCE
+Este reporte es orientación de entrenamiento y no reemplaza la evaluación médica ni el asesoramiento de un profesional de la salud.
+
+CRITERIOS DE CALIDAD:
+- Ejecutivo y con valor real: cada sección debe aportar información accionable.
+- Personalizado: usa el nombre del atleta, sus marcas, sus patrones reales.
+- Tono profesional y directo.
+- Sin inventar datos. Si un dato no está disponible, indicarlo.
+- La sección de alerta de salud SIEMPRE debe incluirse.
+- No incluir secciones de Training Peaks si no se suministraron datos de esa fuente.`
+
+// ── API CALL (proxy seguro via Edge Function — API key en variable de entorno Netlify) ──
+async function callClaudeAPI(userMessage) {
+  const response = await fetch('/api/claude-proxy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      stream: true,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }]
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Error API: ${response.status} — ${errText.slice(0, 200)}`);
+  }
+  return response;
+}
+
+// ── GENERATE REPORT ──
+async function generateReport() {
+  const inventario = document.getElementById('inventario').value.trim();
+  if (!inventario) {
+    alert('Por favor ingresa el inventario del corredor antes de generar el diagnóstico.');
+    return;
+  }
+
+  const trainingpeaks = document.getElementById('trainingpeaks').value.trim();
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Generando...`;
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('report-rendered').style.display = 'none';
+  document.getElementById('raw-output').style.display = 'block';
+  document.getElementById('raw-output').textContent = '';
+  document.getElementById('streaming-indicator').style.display = 'flex';
+  setStatus('generating', 'Generando...');
+
+  let userMessage = `INVENTARIO DEL CORREDOR:\n${inventario}`;
+  if (trainingpeaks) {
+    userMessage += `\n\nDATOS DE TRAINING PEAKS:\n${trainingpeaks}`;
+  } else {
+    userMessage += `\n\nNOTA: No se proporcionaron datos de Training Peaks para este atleta.`;
+  }
+
+  if (zonasData) {
+    userMessage += `\n\nZONAS DE FRECUENCIA CARDÍACA CALCULADAS (incluir exactamente estos valores):
+MAF HR: ${zonasData.maf} bpm
+Rango de trabajo MAF: ${zonasData.maf - 5}–${zonasData.maf} bpm
+FC Máxima teórica: ${zonasData.maxHR} bpm
+Ajustes aplicados: ${zonasData.ajustes.length ? zonasData.ajustes.join('; ') : 'Ninguno'}
+Zona 1: <${zonasData.zonas[0].high} bpm (30–40% del tiempo) — Recuperación total
+Zona 2: ${zonasData.zonas[1].low}–${zonasData.zonas[1].high} bpm (40–50% del tiempo) — Zona MAF / resistencia aeróbica
+Zona 3: ${zonasData.zonas[2].low}–${zonasData.zonas[2].high} bpm (<10% del tiempo) — Tempo
+Zona 4: ${zonasData.zonas[3].low}–${zonasData.zonas[3].high} bpm (10–15% del tiempo) — Umbral
+Zona 5: ${zonasData.zonas[4].low}–${zonasData.zonas[4].high} bpm (5% del tiempo) — Velocidad máxima / VO2 Max`;
+  }
+
+  currentReportText = '';
+
+  try {
+    const response = await callClaudeAPI(userMessage);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              currentReportText += parsed.delta.text;
+              document.getElementById('raw-output').textContent = currentReportText;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    document.getElementById('streaming-indicator').style.display = 'none';
+    document.getElementById('raw-output').style.display = 'none';
+    renderReport(currentReportText);
+    setStatus('done', 'Reporte listo');
+
+  } catch (err) {
+    document.getElementById('streaming-indicator').style.display = 'none';
+    document.getElementById('raw-output').textContent = `Error al generar el reporte: ${err.message}`;
+    setStatus('error', 'Error');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Generar Diagnóstico`;
+  }
+}
+
+// ── PDF HANDLING ──
+async function handlePdfFile(file) {
+  if (!file || file.type !== 'application/pdf') { alert('Selecciona un archivo PDF válido.'); return; }
+  const zone = document.getElementById('pdf-zone');
+  const processing = document.getElementById('pdf-processing');
+  const label = document.getElementById('pdf-label');
+  const sub = document.getElementById('pdf-sub');
+  const icon = document.getElementById('pdf-icon');
+  processing.style.display = 'flex';
+  zone.style.pointerEvents = 'none'; zone.style.opacity = '0.6';
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      fullText += content.items.map(item => item.str).join(' ') + '\n\n';
+    }
+    fullText = fullText.replace(/\s{3,}/g, '\n\n').trim();
+    if (!fullText) throw new Error('No se pudo extraer texto. Puede ser un PDF escaneado.');
+    document.getElementById('inventario').value = fullText;
+    zone.classList.add('loaded');
+    icon.textContent = '✅';
+    label.textContent = file.name;
+    sub.textContent = `${pdf.numPages} página(s) · ${Math.round(fullText.length / 1000)}k caracteres extraídos`;
+  } catch (err) {
+    icon.textContent = '❌'; label.textContent = 'Error al leer el PDF'; sub.textContent = err.message;
+    zone.style.borderColor = 'var(--r4f-danger)';
+  } finally {
+    processing.style.display = 'none'; zone.style.pointerEvents = 'auto'; zone.style.opacity = '1';
+  }
+}
+function handleDragOver(e) { e.preventDefault(); document.getElementById('pdf-zone').classList.add('dragover'); }
+function handleDragLeave(e) { document.getElementById('pdf-zone').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('pdf-zone').classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) handlePdfFile(f); }
+
+// ── ZONAS CALCULATOR ──
+function calcularZonas() {
+  const edad = parseInt(document.getElementById('z-edad').value);
+  if (!edad || edad < 10 || edad > 90) { document.getElementById('zonas-preview').style.display = 'none'; zonasData = null; return; }
+  const q1 = document.getElementById('z-q1').value;
+  const q2 = document.getElementById('z-q2').value;
+  const q3 = document.getElementById('z-q3').value;
+  const q4 = document.getElementById('z-q4').value;
+  const q5 = document.getElementById('z-q5').value;
+  const q6 = document.getElementById('z-q6').value;
+  let maf = 180 - edad;
+  let ajustes = [];
+  if (q1 === 'Si') { maf -= 10; ajustes.push('−10: enfermedad/lesión o medicamentos'); }
+  if (q2 === 'Si') { maf -= 5; ajustes.push('−5: más de dos resfriados/lesiones en el año'); }
+  if (q3 === 'Si') { maf += 5; ajustes.push('+5: entrenamiento consistente sin problemas 2 años'); }
+  if (q4 === 'Si') { maf += 5; ajustes.push('+5: progresos constantes últimos 12 meses'); }
+  if (q5 === 'Si') { maf += 5; ajustes.push('+5: mayor de 65 años'); }
+  if (q6 === 'Si') { maf += 5; ajustes.push('+5: menor de 16 años'); }
+  const maxHR = 208.75 - (0.75 * edad);
+  const z1High = Math.round(maxHR * 1.025 * 0.6);
+  const z2Low = z1High + 1; const z2High = Math.round(maf);
+  const z3Low = z2High + 1; const z3High = Math.round(maxHR * 1.025 * 0.87);
+  const z4Low = z3High + 1; const z4High = Math.round(maxHR * 1.025 * 0.93);
+  const z5Low = z4High + 1; const z5High = Math.round(maxHR * 1.07 * 1.025);
+  zonasData = {
+    edad, maf, maxHR: Math.round(maxHR), ajustes,
+    zonas: [
+      { num: 1, nombre: 'Zona 1', low: 0,    high: z1High, pct: '30–40%', desc: 'Recuperación total. Calentamiento y enfriamiento.', color: 'z1' },
+      { num: 2, nombre: 'Zona 2', low: z2Low, high: z2High, pct: '40–50%', desc: 'Ritmo suave para desarrollar resistencia y quemar grasa. Zona MAF.', color: 'z2' },
+      { num: 3, nombre: 'Zona 3', low: z3Low, high: z3High, pct: '<10%',   desc: 'Ritmo tempo. Últimas 4–6 semanas antes de competencia.', color: 'z3' },
+      { num: 4, nombre: 'Zona 4', low: z4Low, high: z4High, pct: '10–15%', desc: 'Esfuerzo duro 5K. Construcción de umbral superior.', color: 'z4' },
+      { num: 5, nombre: 'Zona 5', low: z5Low, high: z5High, pct: '5%',     desc: 'Velocidad máxima e intervalos cortos. VO2 Max.', color: 'z5' },
+    ]
+  };
+  document.getElementById('maf-preview-val').textContent = maf + ' bpm';
+  document.getElementById('maf-ajuste-txt').innerHTML = `Rango MAF: <strong style="color:var(--r4f-text)">${maf-5}–${maf} bpm</strong><br>` + (ajustes.length ? ajustes.map(a => `<span style="font-size:0.68rem">${a}</span>`).join('<br>') : '<span style="font-size:0.68rem">Sin ajustes</span>');
+  document.getElementById('zonas-tabla').innerHTML = zonasData.zonas.map(z => `<div class="zona-row ${z.color}"><span class="zona-label">${z.nombre}</span><span class="zona-range">${z.low === 0 ? '&lt;' + z.high : z.low + '–' + z.high} bpm</span><span class="zona-pct">${z.pct}</span></div>`).join('');
+  document.getElementById('zonas-preview').style.display = 'block';
+}
+
+function setRadio(fieldId, value, btn) {
+  document.getElementById(fieldId).value = value;
+  btn.closest('.zona-radio').querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calcularZonas();
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ── INBOX ──
+function toggleInbox() {
+  inboxOpen = !inboxOpen;
+  const modal = document.getElementById('inbox-modal');
+  modal.style.display = inboxOpen ? 'flex' : 'none';
+  if (inboxOpen) renderInbox();
+}
+
+async function renderInbox() {
+  const list = document.getElementById('inbox-list');
+  list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--r4f-muted);font-size:0.82rem">Cargando...</div>';
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/formularios?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!response.ok) throw new Error('Error al conectar con Supabase');
+    const submissions = await response.json();
+    const pending = submissions.filter(s => s.status === 'pending').length;
+    const countEl = document.getElementById('inbox-count');
+    countEl.textContent = pending;
+    countEl.style.display = pending > 0 ? 'flex' : 'none';
+    if (!submissions.length) {
+      list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--r4f-muted);font-size:0.82rem">No hay formularios recibidos aún.</div>';
+      return;
+    }
+    list.innerHTML = submissions.map(s => `
+      <div class="submission-card">
+        <div class="sub-name">${s.nombre || 'Sin nombre'}</div>
+        <div class="sub-date">${new Date(s.created_at).toLocaleDateString('es-ES', {day:'2-digit',month:'long',year:'numeric'})} · ${s.status==='pending'?'<span style="color:var(--r4f-warning)">Pendiente</span>':'<span style="color:var(--r4f-success)">Procesado</span>'}</div>
+        <div class="sub-actions">
+          <button class="btn-load" onclick="loadSubmission(${s.id})">📋 Cargar en herramienta</button>
+          <button class="btn-delete" onclick="deleteSubmission(${s.id})">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--r4f-danger);font-size:0.82rem">Error al cargar formularios: ${e.message}</div>`;
+  }
+}
+
+async function loadSubmission(id) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/formularios?id=eq.${id}&select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await response.json();
+    if (data.length) {
+      const inventario = data[0].inventario;
+      document.getElementById('inventario').value = inventario;
+
+      // Auto-fill zonas if submission includes zone data
+      if (inventario.includes('ZONAS DE FC') || inventario.includes('MAF HR')) {
+        const edadMatch = inventario.match(/Edad:\s*(\d+)/);
+        const q1Match = inventario.match(/Q1:(\w+)/);
+        const q2Match = inventario.match(/Q2:(\w+)/);
+        const q3Match = inventario.match(/Q3:(\w+)/);
+        const q4Match = inventario.match(/Q4:(\w+)/);
+        const q5Match = inventario.match(/Q5:(\w+)/);
+        const q6Match = inventario.match(/Q6:(\w+)/);
+        if (edadMatch) document.getElementById('z-edad').value = edadMatch[1];
+        ['z-q1','z-q2','z-q3','z-q4','z-q5','z-q6'].forEach((id, i) => {
+          const matches = [q1Match,q2Match,q3Match,q4Match,q5Match,q6Match];
+          if (matches[i]) document.getElementById(id).value = matches[i][1];
+        });
+        calcularZonas();
+        switchTab('zonas');
+      } else {
+        switchTab('inventario');
+      }
+
+      // Mark as processed
+      await fetch(`${SUPABASE_URL}/rest/v1/formularios?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'processed' })
+      });
+    }
+  } catch(e) { console.error('Error loading submission:', e); }
+  toggleInbox();
+}
+
+async function deleteSubmission(id) {
+  if (!confirm('¿Eliminar este formulario?')) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/formularios?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    renderInbox();
+  } catch(e) { console.error(e); }
+}
+
+async function checkInboxCount() {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/formularios?status=eq.pending&select=id`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await response.json();
+    const count = document.getElementById('inbox-count');
+    if (count) { count.textContent = data.length; count.style.display = data.length > 0 ? 'flex' : 'none'; }
+  } catch(e) {}
+}
+checkInboxCount();
+setInterval(checkInboxCount, 15000);
+
+// ── RENDER REPORT ──
+function renderReport(text) {
+  const container = document.getElementById('report-rendered');
+  container.innerHTML = '';
+  container.style.display = 'block';
+
+  const nameMatch = text.match(/nombre[:\s]+([A-ZÀ-Úa-záéíóúñ]+(?:\s+[A-ZÀ-Úa-záéíóúñ]+)*)/i) ||
+                    text.match(/atleta[:\s]+([A-ZÀ-Ú][a-záéíóúñ]+(?:\s+[A-ZÀ-Ú][a-záéíóúñ]+)*)/i);
+  const athleteName = nameMatch ? nameMatch[1] : 'Atleta';
+  const initials = athleteName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const nowDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const athleteHeader = document.createElement('div');
+  athleteHeader.className = 'report-athlete-header';
+  athleteHeader.innerHTML = `<div class="athlete-avatar">${initials}</div><div class="athlete-meta"><h2>${athleteName}</h2><p>Diagnóstico Inicial · Running.4.Fitness · ${nowDate}</p></div>`;
+  container.appendChild(athleteHeader);
+
+  const sections = text.split(/^## /m).filter(s => s.trim());
+  let healthAlertContent = '';
+  sections.forEach(s => {
+    if (s.match(/^⚠️ ALERTA/i) || s.match(/^ALERTA DE CONDICIONES/i)) {
+      healthAlertContent = s.replace(/^[^\n]+\n/, '').trim();
+    }
+  });
+
+  if (healthAlertContent) {
+    const alert = document.createElement('div');
+    alert.className = 'health-alert visible';
+    alert.innerHTML = `<div class="health-alert-title">⚠ Alerta de Salud — Revisión Obligatoria</div><p>${healthAlertContent.replace(/\n/g, '<br>')}</p>`;
+    container.appendChild(alert);
+  }
+
+  const sectionIcons = { 'RESUMEN EJECUTIVO':'01','PERFIL':'02','MARCO':'03','FRECUENCIA':'04','CONDICIÓN AERÓBICA':'05','DIAGNÓSTICO DEL PATRÓN':'06','CONDICIONES GENERALES':'07','NUTRICIÓN':'08','RENDIMIENTO':'09','PLAN PROPUESTO':'10','PROTOCOLOS':'11','NOTA':'★' };
+
+  let secIndex = 0;
+  sections.forEach(section => {
+    const lines = section.split('\n');
+    const title = lines[0].trim();
+    const body = lines.slice(1).join('\n').trim();
+    if (!body) return;
+    if (title.match(/^⚠️ ALERTA/i) || title.match(/^ALERTA DE CONDICIONES/i)) return;
+
+    secIndex++;
+    const numKey = Object.keys(sectionIcons).find(k => title.toUpperCase().includes(k));
+    const num = numKey ? sectionIcons[numKey] : String(secIndex).padStart(2, '0');
+
+    const isMaf = title.toUpperCase().includes('FRECUENCIA') || title.toUpperCase().includes('MAF');
+    const mafMatch = body.match(/MAF HR[:\s]+(\d+)\s*bpm/i);
+    const rangeMatch = body.match(/[Rr]ango[^:]*:\s*(\d+)\s*[–—-]\s*(\d+)\s*bpm/);
+
+    let bodyHtml = formatBody(body);
+    if (isMaf && mafMatch) {
+      const mafVal = parseInt(mafMatch[1]);
+      const low = rangeMatch ? rangeMatch[1] : (mafVal - 5);
+      const high = rangeMatch ? rangeMatch[2] : mafVal;
+      bodyHtml = `<div class="maf-display"><div class="maf-value"><div class="label">MAF HR</div><div class="number">${mafVal}</div><div class="unit">bpm</div></div><div class="maf-divider"></div><div class="maf-value"><div class="label">Zona baja</div><div class="number" style="font-size:1.4rem">${low}</div><div class="unit">bpm</div></div><div class="maf-divider"></div><div class="maf-value"><div class="label">Zona alta</div><div class="number" style="font-size:1.4rem">${high}</div><div class="unit">bpm</div></div></div>` + bodyHtml;
+    }
+
+    const sec = document.createElement('div');
+    sec.className = 'report-section';
+    sec.innerHTML = `<div class="section-header"><div class="section-num">${num}</div><div class="section-title">${title.replace(/^⚠️\s*/, '')}</div></div><div class="section-body">${bodyHtml}</div>`;
+    container.appendChild(sec);
+  });
+
+  const disc = document.createElement('div');
+  disc.className = 'disclaimer';
+  disc.textContent = 'Este reporte es una herramienta de orientación para el entrenamiento y no reemplaza la evaluación de un profesional de la salud. Running.4.Fitness no asume responsabilidad por decisiones tomadas exclusivamente con base en este diagnóstico.';
+  container.appendChild(disc);
+
+  if (zonasData) {
+    const zColors = ['#3db87a','#5dd49a','#e8a52a','#f2895d','#e84040'];
+    const zBg = ['rgba(61,184,122,0.08)','rgba(61,184,122,0.12)','rgba(232,165,42,0.08)','rgba(232,98,42,0.08)','rgba(232,64,64,0.08)'];
+    const zonaSec = document.createElement('div');
+    zonaSec.className = 'report-section';
+    zonaSec.style.marginTop = '1.75rem';
+    zonaSec.innerHTML = `
+      <div class="section-header"><div class="section-num" style="background:rgba(61,184,122,0.15);border-color:rgba(61,184,122,0.3);color:#3db87a">FC</div><div class="section-title">Zonas de Frecuencia Cardíaca Personalizadas</div></div>
+      <div class="section-body">
+        <div class="maf-display">
+          <div class="maf-value"><div class="label">MAF HR</div><div class="number">${zonasData.maf}</div><div class="unit">bpm</div></div>
+          <div class="maf-divider"></div>
+          <div class="maf-value"><div class="label">Zona baja</div><div class="number" style="font-size:1.4rem">${zonasData.maf - 5}</div><div class="unit">bpm</div></div>
+          <div class="maf-divider"></div>
+          <div class="maf-value"><div class="label">FC Máx teórica</div><div class="number" style="font-size:1.4rem">${zonasData.maxHR}</div><div class="unit">bpm</div></div>
+        </div>
+        ${zonasData.ajustes.length ? `<p style="font-size:0.75rem;color:var(--r4f-muted);margin-bottom:0.75rem">Ajustes: ${zonasData.ajustes.join(' · ')}</p>` : ''}
+        <table class="zonas-report-table">
+          <thead><tr><th>Zona</th><th>Rango FC</th><th>% Tiempo</th><th>Descripción</th></tr></thead>
+          <tbody>${zonasData.zonas.map((z,i) => `<tr>
+            <td><span class="zona-badge" style="background:${zBg[i]};color:${zColors[i]};border:1px solid ${zColors[i]}40">${z.nombre}</span></td>
+            <td class="zona-range">${z.low === 0 ? '<'+z.high : z.low+'–'+z.high} bpm</td>
+            <td style="color:var(--r4f-muted)">${z.pct}</td>
+            <td>${z.desc}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+    container.appendChild(zonaSec);
+  }
+}
+
+function formatBody(text) {
+  let html = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
+  const parts = html.split(/\n\n+/);
+  return parts.map(p => {
+    p = p.trim();
+    if (!p) return '';
+    if (p.includes('<li>')) return `<ul>${p}</ul>`;
+    return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+}
+
+// ── UTILS ──
+function setStatus(type, label) {
+  const badge = document.getElementById('status-badge');
+  badge.className = `report-status status-${type}`;
+  badge.textContent = label;
+}
+
+function clearInputs() {
+  document.getElementById('inventario').value = '';
+  document.getElementById('trainingpeaks').value = '';
+  document.getElementById('pdf-input').value = '';
+  const zone = document.getElementById('pdf-zone');
+  zone.classList.remove('loaded','dragover');
+  zone.style.borderColor = ''; zone.style.pointerEvents = 'auto'; zone.style.opacity = '1';
+  document.getElementById('pdf-icon').textContent = '📄';
+  document.getElementById('pdf-label').textContent = 'Subir PDF del atleta';
+  document.getElementById('pdf-sub').textContent = 'Haz clic o arrastra el archivo aquí · .pdf';
+  document.getElementById('empty-state').style.display = 'flex';
+  document.getElementById('streaming-indicator').style.display = 'none';
+  document.getElementById('raw-output').style.display = 'none';
+  document.getElementById('raw-output').textContent = '';
+  document.getElementById('report-rendered').style.display = 'none';
+  document.getElementById('report-rendered').innerHTML = '';
+  setStatus('idle', 'En espera');
+  currentReportText = '';
+}
+
+function copyReport() {
+  if (!currentReportText) { alert('No hay reporte para copiar.'); return; }
+  navigator.clipboard.writeText(currentReportText).then(() => {
+    const btn = event.target.closest('button');
+    const original = btn.innerHTML;
+    btn.innerHTML = btn.innerHTML.replace('Copiar', 'Copiado ✓');
+    setTimeout(() => btn.innerHTML = original, 2000);
+  });
+}
+
+function printReport() {
+  if (!currentReportText) { alert('Genera el reporte primero.'); return; }
+  const rendered = document.getElementById('report-rendered');
+  if (!rendered || rendered.style.display === 'none') { alert('Genera el reporte primero.'); return; }
+  const reportHTML = rendered.innerHTML;
+  const athleteName = rendered.querySelector('.athlete-meta h2')?.textContent || 'Atleta';
+  const date = new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'});
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><title>R4F — ${athleteName}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#fff;color:#1a2a3a;line-height:1.6;padding:2.5rem 2rem;max-width:820px;margin:0 auto;}
+.print-header{display:flex;align-items:center;gap:1rem;padding-bottom:1.25rem;border-bottom:2px solid #f07820;margin-bottom:1.75rem;}
+.print-logo{width:40px;height:40px;background:#f07820;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.print-logo svg{width:22px;height:22px;fill:white;}
+.print-logo-text h1{font-family:'Playfair Display',serif;font-size:1.1rem;color:#0d3461;}
+.print-logo-text p{font-size:0.65rem;color:#8a8880;text-transform:uppercase;letter-spacing:0.12em;}
+.print-date{margin-left:auto;font-size:0.72rem;color:#8a8880;text-align:right;}
+.report-athlete-header{display:flex;align-items:center;gap:1.25rem;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid #e8e6e0;}
+.athlete-avatar{width:48px;height:48px;background:rgba(240,120,32,0.10);border:1px solid rgba(240,120,32,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;color:#f07820;flex-shrink:0;}
+.athlete-meta h2{font-family:'Playfair Display',serif;font-size:1.25rem;color:#0d3461;margin-bottom:0.2rem;}
+.athlete-meta p{font-size:0.75rem;color:#8a8880;}
+.health-alert{background:#fff5f5;border:1px solid #f5c1c1;border-left:3px solid #e84040;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1.5rem;}
+.health-alert-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#e84040;margin-bottom:0.4rem;}
+.health-alert p{font-size:0.82rem;color:#7a2020;line-height:1.6;}
+.report-section{margin-bottom:1.25rem;border:1px solid #e8e6e0;border-radius:10px;overflow:hidden;break-inside:avoid;}
+.section-header{padding:0.75rem 1.1rem;border-bottom:1px solid #e8e6e0;display:flex;align-items:center;gap:0.65rem;background:#f7f6f3;}
+.section-num{width:20px;height:20px;background:rgba(240,120,32,0.10);border:1px solid rgba(240,120,32,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:#f07820;flex-shrink:0;}
+.section-title{font-size:0.72rem;font-weight:600;color:#0d3461;text-transform:uppercase;letter-spacing:0.08em;}
+.section-body{padding:1rem 1.1rem;font-size:0.83rem;color:#3a3835;line-height:1.75;}
+.section-body p{margin-bottom:0.65rem;}.section-body p:last-child{margin-bottom:0;}
+.section-body ul{padding-left:1.2rem;margin:0.4rem 0 0.65rem;}.section-body ul li{margin-bottom:0.35rem;}
+.section-body strong{color:#0d3461;font-weight:600;}
+.maf-display{background:#f7f6f3;border:1px solid #e8e6e0;border-radius:8px;padding:0.85rem 1.1rem;margin:0.65rem 0;display:flex;align-items:center;gap:1.25rem;}
+.maf-value{text-align:center;}.maf-value .label{font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:#8a8880;margin-bottom:0.15rem;}
+.maf-value .number{font-family:'Playfair Display',serif;font-size:1.75rem;color:#f07820;line-height:1;}.maf-value .unit{font-size:0.65rem;color:#7a8ba0;margin-top:0.1rem;}
+.maf-divider{width:1px;height:40px;background:#e8e6e0;}
+.disclaimer{margin-top:1.5rem;padding:0.85rem 1rem;background:#f7f6f3;border:1px solid #e8e6e0;border-radius:8px;font-size:0.72rem;color:#8a8880;line-height:1.6;}
+.zonas-report-table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-top:0.5rem;}
+.zonas-report-table th{text-align:left;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#8a8880;padding:0.4rem 0.75rem;border-bottom:1px solid #e8e6e0;}
+.zonas-report-table td{padding:0.5rem 0.75rem;border-bottom:1px solid #e8e6e0;color:#3a3835;vertical-align:top;}
+.zonas-report-table tr:last-child td{border-bottom:none;}
+.zona-badge{display:inline-block;padding:0.15rem 0.5rem;border-radius:4px;font-weight:700;font-size:0.7rem;}
+@media print{body{padding:1rem;}.report-section{break-inside:avoid;}.health-alert{break-inside:avoid;}}
+</style></head><body>
+<div class="print-header">
+  <div class="print-logo"><svg viewBox="0 0 24 24"><path d="M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z"/></svg></div>
+  <div class="print-logo-text"><h1>Running.4.Fitness</h1><p>Sistema de Diagnóstico · Método Maffetone</p></div>
+  <div class="print-date"><strong>Diagnóstico Inicial</strong><br>${date}</div>
+</div>
+${reportHTML}
+</body></html>`);
+  win.document.close();
+  setTimeout(() => { win.focus(); win.print(); }, 1200);
+}
+</script>
+</body>
+</html>
