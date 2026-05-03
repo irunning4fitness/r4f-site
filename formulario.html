@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R4F — Athlete Intake Form / Formulario del Atleta</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --r4f-green: #4db825;
+    --r4f-green-dark: #3a8f1a;
+    --r4f-green-light: #6dd43a;
+    --r4f-green-dim: rgba(77,184,37,0.1);
+    --r4f-navy: #0d3461;
+    --r4f-navy-mid: #1a4a7a;
+    --r4f-navy-light: #4a9fd4;
+    --r4f-white: #ffffff;
+    --r4f-cream: #f4f6f9;
+    --r4f-border: rgba(13,52,97,0.12);
+    --r4f-border-strong: rgba(13,52,97,0.25);
+    --r4f-text: #1a2a3a;
+    --r4f-muted: #7a8ba0;
+    --r4f-error: #e53e3e;
+    --r4f-orange: #f07820;
+    --r4f-blue: #4a9fd4;
+    --r4f-warning: #f07820;
+    --r4f-success: #4db825;
+    --r4f-danger: #e53e3e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--r4f-cream);
+    color: var(--r4f-text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── HERO HEADER ── */
+  .hero {
+    background: var(--r4f-navy);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, var(--r4f-navy-light) 0%, var(--r4f-navy) 60%);
+    opacity: 0.8;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 40px;
+    background: var(--r4f-cream);
+    clip-path: ellipse(55% 100% at 50% 100%);
+  }
+
+  .hero-content { position: relative; z-index: 1; }
+
+  .hero-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-logo-mark {
+    width: 44px; height: 44px;
+    background: var(--r4f-orange);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .hero-logo-mark svg { width: 24px; height: 24px; fill: white; }
+
+  .hero-logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: 0.02em;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: white;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hero p {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    max-width: 480px;
+    margin: 0 auto 1.5rem;
+  }
+
+  /* ── LANGUAGE TOGGLE ── */
+  .lang-toggle {
+    display: inline-flex;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50px;
+    padding: 0.2rem;
+    gap: 0.2rem;
+  }
+
+  .lang-btn {
+    padding: 0.4rem 1.2rem;
+    border: none;
+    background: none;
+    color: rgba(255,255,255,0.6);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .lang-btn.active {
+    background: var(--r4f-orange);
+    color: white;
+  }
+
+  /* ── FORM CONTAINER ── */
+  .form-container {
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 2rem;
+    align-items: center;
+  }
+
+  .progress-step {
+    flex: 1;
+    height: 3px;
+    background: var(--r4f-border);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+
+  .progress-step.done { background: var(--r4f-orange); }
+  .progress-step.active { background: var(--r4f-blue); }
+
+  .progress-label {
+    font-size: 0.7rem;
+    color: var(--r4f-muted);
+    white-space: nowrap;
+    margin-left: 0.5rem;
+  }
+
+  /* ── SECTIONS ── */
+  .form-section {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--r4f-border);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--r4f-border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--r4f-cream);
+  }
+
+  .section-icon {
+    width: 34px; height: 34px;
+    background: var(--r4f-green-dim);
+    border: 1px solid rgba(74,155,111,0.25);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--r4f-navy);
+  }
+
+  .section-body { padding: 1.5rem 1.75rem; }
+
+  /* ── FIELDS ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .field-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .field-grid.cols-1 { grid-template-columns: 1fr; }
+
+  .field { margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--r4f-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    background: var(--r4f-cream);
+    border: 1px solid var(--r4f-border-strong);
+    border-radius: 8px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.88rem;
+    color: var(--r4f-text);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--r4f-green);
+    background: white;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7490' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.9rem center;
+    padding-right: 2.5rem;
+  }
+
+  /* ── PHOTO UPLOAD ── */
+  .photo-upload {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    background: var(--r4f-cream);
+    border: 2px dashed var(--r4f-border-strong);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+  }
+
+  .photo-upload:hover {
+    border-color: var(--r4f-green);
+    background: var(--r4f-green-dim);
+  }
+
+  .photo-preview {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    background: var(--r4f-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .photo-preview img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .photo-text strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--r4f-text);
+    margin-bottom: 0.2rem;
+  }
+
+  .photo-text span {
+    font-size: 0.75rem;
+    color: var(--r4f-muted);
+  }
+
+  #photo-input { display: none; }
+
+  /* ── YES/NO QUESTIONS ── */
+  .yn-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .yn-row {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    align-items: center;
+    border-bottom: 1px solid var(--r4f-border);
+    padding: 0.75rem 0;
+    gap: 1rem;
+  }
+
+  .yn-row:last-child { border-bottom: none; }
+
+  .yn-question {
+    font-size: 0.83rem;
+    color: var(--r4f-text);
+    line-height: 1.5;
+  }
+
+  .yn-options {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+  }
+
+  .yn-btn {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--r4f-border-strong);
+    border-radius: 6px;
+    background: none;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--r4f-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .yn-btn.selected-yes {
+    background: var(--r4f-green-dim);
+    border-color: var(--r4f-green);
+    color: var(--r4f-green-dark);
+    font-weight: 600;
+  }
+
+  .yn-btn.selected-no {
+    background: rgba(26,37,64,0.06);
+    border-color: var(--r4f-navy-light);
+    color: var(--r4f-navy);
+    font-weight: 600;
+  }
+
+  /* ── MEAL TABLE ── */
+  .meal-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .meal-table th {
+    padding: 0.5rem 0.6rem;
+    background: var(--r4f-cream);
+    border: 1px solid var(--r4f-border);
+    font-weight: 500;
+    font-size: 0.7rem;
+    color: var(--r4f-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .meal-table td {
+    border: 1px solid var(--r4f-border);
+    padding: 0.3rem;
+  }
+  .meal-table td:first-child {
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--r4f-muted);
+    background: var(--r4f-cream);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .meal-table input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.4rem;
+    color: var(--r4f-text);
+    outline: none;
+  }
+  .meal-table input:focus { background: var(--r4f-green-dim); border-radius: 4px; }
+
+  /* ── RUNNER TYPE ── */
+  .runner-types {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .runner-card {
+    border: 1.5px solid var(--r4f-border-strong);
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .runner-card:hover { border-color: var(--r4f-green); }
+  .runner-card.selected {
+    border-color: var(--r4f-green);
+    background: var(--r4f-green-dim);
+  }
+
+  .runner-card .runner-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+  .runner-card .runner-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--r4f-navy);
+    margin-bottom: 0.3rem;
+  }
+  .runner-card .runner-desc { font-size: 0.7rem; color: var(--r4f-muted); line-height: 1.4; }
+
+  /* ── RACE TABLE ── */
+  .race-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .race-table th {
+    padding: 0.5rem 0.75rem;
+    background: var(--r4f-cream);
+    border: 1px solid var(--r4f-border);
+    font-weight: 500;
+    font-size: 0.7rem;
+    color: var(--r4f-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: left;
+  }
+  .race-table td { border: 1px solid var(--r4f-border); padding: 0.3rem; }
+  .race-table input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.5rem;
+    color: var(--r4f-text);
+    outline: none;
+  }
+  .race-table input:focus { background: var(--r4f-green-dim); border-radius: 4px; }
+
+  /* ── SUBMIT SECTION ── */
+  .submit-section {
+    background: var(--r4f-navy);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  .submit-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+
+  .submit-section p {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-submit {
+    background: var(--r4f-orange);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.9rem 3rem;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-submit:hover { background: var(--r4f-green-dark); transform: translateY(-2px); }
+  .btn-submit:disabled { background: var(--r4f-muted); transform: none; cursor: not-allowed; }
+
+  /* ── SUCCESS STATE ── */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .success-icon {
+    width: 80px; height: 80px;
+    background: var(--r4f-green-dim);
+    border: 2px solid var(--r4f-green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+  }
+
+  .success-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--r4f-navy);
+    margin-bottom: 0.5rem;
+  }
+
+  .success-screen p { font-size: 0.85rem; color: var(--r4f-muted); }
+
+  /* ── UTILITY ── */
+  .field-hint { font-size: 0.7rem; color: var(--r4f-muted); margin-top: 0.3rem; }
+  .divider { height: 1px; background: var(--r4f-border); margin: 1.25rem 0; }
+  .subsection-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--r4f-green-dark);
+    margin-bottom: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .subsection-label:first-child { margin-top: 0; }
+
+  .full-width { grid-column: 1 / -1; }
+
+  @media (max-width: 640px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .field-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+    .runner-types { grid-template-columns: 1fr; }
+    .meal-table { font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Netlify Forms detection -->
+<form name="r4f-atleta" netlify netlify-honeypot="bot-field" data-netlify-recaptcha="false" hidden>
+  <input type="text" name="nombre">
+  <input type="email" name="email">
+  <input type="text" name="fecha">
+  <textarea name="inventario"></textarea>
+</form>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-logo">
+      <div class="hero-logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M13.49 5.48c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-3.6 13.9l1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1l-5.2 2.2v4.7h2v-3.4l1.8-.7-1.6 8.1-4.9-1-.4 2 7 1.4z"/></svg>
+      </div>
+      <span class="hero-logo-text">Running.4.Fitness</span>
+    </div>
+    <h1 id="hero-title">Athlete Intake Form</h1>
+    <p id="hero-sub">Please answer each question as completely as possible. The more information you provide, the better your training plan will be tailored to your specific needs.</p>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">English</button>
+      <button class="lang-btn" onclick="setLang('es')">Español</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="form-container">
+  <div class="progress-bar">
+    <div class="progress-step done" id="p1"></div>
+    <div class="progress-step" id="p2"></div>
+    <div class="progress-step" id="p3"></div>
+    <div class="progress-step" id="p4"></div>
+    <div class="progress-step" id="p5"></div>
+    <div class="progress-step" id="p6"></div>
+    <div class="progress-step" id="p7"></div>
+    <span class="progress-label" id="progress-label">Personal Info</span>
+  </div>
+
+  <div id="form-content">
+
+  <!-- 1. PERSONAL INFO -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">👤</div>
+      <div class="section-title" data-en="Personal Information" data-es="Información Personal">Personal Information</div>
+    </div>
+    <div class="section-body">
+
+      <!-- Photo -->
+      <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(this)">
+      <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
+        <div class="photo-preview" id="photo-preview">📷</div>
+        <div class="photo-text">
+          <strong data-en="Upload your photo" data-es="Sube tu foto">Upload your photo</strong>
+          <span data-en="Click to select · JPG, PNG · Max 5MB" data-es="Haz clic para seleccionar · JPG, PNG · Máx 5MB">Click to select · JPG, PNG · Max 5MB</span>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label data-en="First Name" data-es="Nombre">First Name</label>
+          <input type="text" id="f-nombre" placeholder="Yliana">
+        </div>
+        <div class="field">
+          <label data-en="Last Name" data-es="Apellidos">Last Name</label>
+          <input type="text" id="f-apellido" placeholder="Antunez Sanchez">
+        </div>
+        <div class="field">
+          <label data-en="Gender" data-es="Género">Gender</label>
+          <select id="f-genero">
+            <option value="">-- Select / Seleccionar --</option>
+            <option value="Femenino">Female / Femenino</option>
+            <option value="Masculino">Male / Masculino</option>
+            <option value="Otro">Other / Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-en="Date of Birth" data-es="Fecha de Nacimiento">Date of Birth</label>
+          <input type="date" id="f-nacimiento">
+        </div>
+        <div class="field">
+          <label data-en="Height (cm)" data-es="Estatura (cm)">Height (cm)</label>
+          <input type="number" id="f-estatura" placeholder="162">
+        </div>
+        <div class="field">
+          <label data-en="Body Fat %" data-es="% Grasa Corporal">Body Fat %</label>
+          <input type="number" id="f-grasa" placeholder="35">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="atleta@email.com">
+        </div>
+        <div class="field">
+          <label data-en="Phone" data-es="Teléfono">Phone</label>
+          <input type="tel" id="f-telefono" placeholder="+1 305 555 0000">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. HEALTH INFO -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">❤️</div>
+      <div class="section-title" data-en="Health Information" data-es="Información de Salud">Health Information</div>
+    </div>
+    <div class="section-body">
+      <p class="subsection-label" data-en="Do you suffer from any of the following?" data-es="¿Sufre o padece alguna de las siguientes condiciones?">Do you suffer from any of the following?</p>
+
+      <div id="health-questions">
+        <!-- Questions injected by JS -->
+      </div>
+
+      <div class="divider"></div>
+      <div class="field">
+        <label data-en="Medications (list all regular medications)" data-es="Medicamentos (liste todos los medicamentos regulares)">Medications</label>
+        <textarea id="f-medicamentos" placeholder="e.g. Enalapril 5mg/day, Metformin..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. WORK & STRESS -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">💼</div>
+      <div class="section-title" data-en="Work & Stress" data-es="Actividad Laboral y Estrés">Work & Stress</div>
+    </div>
+    <div class="section-body">
+      <div class="field-grid cols-1">
+        <div class="field">
+          <label data-en="Type of daily work" data-es="Tipo de trabajo diario">Type of daily work</label>
+          <input type="text" id="f-trabajo" placeholder="e.g. Accountant, Teacher, Engineer...">
+        </div>
+        <div class="field">
+          <label data-en="Stress level at work and explanation" data-es="Nivel de estrés en el trabajo y explicación">Stress level & explanation</label>
+          <select id="f-estres-nivel" style="margin-bottom:0.5rem">
+            <option value="">-- Select / Seleccionar --</option>
+            <option value="Alto">High / Alto</option>
+            <option value="Medio">Medium / Medio</option>
+            <option value="Bajo">Low / Bajo</option>
+          </select>
+          <textarea id="f-estres-desc" placeholder="Briefly describe your work stress..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. NUTRITION -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">🥗</div>
+      <div class="section-title" data-en="Nutrition" data-es="Alimentación">Nutrition</div>
+    </div>
+    <div class="section-body">
+      <p class="subsection-label" data-en="Typical weekly meals" data-es="Comidas típicas de la semana">Typical weekly meals</p>
+      <div style="overflow-x:auto">
+        <table class="meal-table" id="meal-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th data-en="Mon" data-es="Lun">Mon</th>
+              <th data-en="Tue" data-es="Mar">Tue</th>
+              <th data-en="Wed" data-es="Mié">Wed</th>
+              <th data-en="Thu" data-es="Jue">Thu</th>
+              <th data-en="Fri" data-es="Vie">Fri</th>
+              <th data-en="Sat" data-es="Sáb">Sat</th>
+              <th data-en="Sun" data-es="Dom">Sun</th>
+            </tr>
+          </thead>
+          <tbody id="meal-body">
+          </tbody>
+        </table>
+      </div>
+      <div class="field" style="margin-top:1rem">
+        <label data-en="Snacks (typical)" data-es="Meriendas (típicas)">Snacks</label>
+        <textarea id="f-meriendas" placeholder="e.g. Fruits, nuts, protein bar..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. TRAINING HISTORY -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">🏃</div>
+      <div class="section-title" data-en="Training History" data-es="Historial de Entrenamiento">Training History</div>
+    </div>
+    <div class="section-body">
+
+      <p class="subsection-label" data-en="Last 8 weeks summary" data-es="Resumen últimas 8 semanas">Last 8 weeks summary</p>
+      <div class="field-grid">
+        <div class="field">
+          <label data-en="Weekly Volume (km)" data-es="Volumen Semanal (km)">Weekly Volume (km)</label>
+          <input type="text" id="f-volumen" placeholder="e.g. 12–18 km">
+        </div>
+        <div class="field">
+          <label data-en="Long Run Distance" data-es="Distancia Carrera Larga">Long Run Distance</label>
+          <input type="text" id="f-larga" placeholder="e.g. 7–9 km">
+        </div>
+        <div class="field">
+          <label data-en="Intensity Workouts" data-es="Entrenamientos de Intensidad">Intensity Workouts</label>
+          <input type="text" id="f-intensidad" placeholder="e.g. Easy but breathless">
+        </div>
+        <div class="field">
+          <label data-en="Preferred units" data-es="Unidades preferidas">Units</label>
+          <select id="f-unidades">
+            <option value="km">Kilometers / Kilómetros</option>
+            <option value="mi">Miles / Millas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="subsection-label" data-en="Average weekly volume" data-es="Promedio semanal">Average weekly volume</p>
+      <div class="field-grid cols-3">
+        <div class="field">
+          <label data-en="Last 6 months" data-es="Últimos 6 meses">Last 6 months</label>
+          <input type="text" id="f-vol6m" placeholder="km/week">
+        </div>
+        <div class="field">
+          <label data-en="Last 10 weeks" data-es="Últimas 10 semanas">Last 10 weeks</label>
+          <input type="text" id="f-vol10w" placeholder="km/week">
+        </div>
+        <div class="field">
+          <label data-en="Max weekly volume" data-es="Máximo volumen semanal">Max weekly</label>
+          <input type="text" id="f-volmax" placeholder="km/week">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="subsection-label" data-en="Average paces" data-es="Ritmos promedio">Average paces</p>
+      <div class="field-grid cols-3">
+        <div class="field">
+          <label data-en="Easy runs" data-es="Carrera fácil">Easy</label>
+          <input type="text" id="f-ritmo-facil" placeholder="min/km">
+        </div>
+        <div class="field">
+          <label data-en="Tempo runs" data-es="Tempo">Tempo</label>
+          <input type="text" id="f-ritmo-tempo" placeholder="min/km">
+        </div>
+        <div class="field">
+          <label data-en="Intervals" data-es="Intervalos">Intervals</label>
+          <input type="text" id="f-ritmo-intervalos" placeholder="min/km">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="subsection-label" data-en="Weekly training structure" data-es="Estructura semanal de entrenamiento">Weekly structure</p>
+      <div class="field-grid">
+        <div class="field">
+          <label data-en="Intense sessions per week" data-es="Sesiones intensas por semana">Intense sessions/week</label>
+          <input type="number" id="f-sesiones-intensas" placeholder="2">
+        </div>
+        <div class="field">
+          <label data-en="Rest days per week" data-es="Días de descanso por semana">Rest days/week</label>
+          <input type="number" id="f-descanso" placeholder="1">
+        </div>
+        <div class="field">
+          <label data-en="Long run day" data-es="Día de la carrera larga">Long run day</label>
+          <input type="text" id="f-dia-larga" placeholder="Sunday / Domingo">
+        </div>
+        <div class="field">
+          <label data-en="Longest training run ever" data-es="Mayor distancia en entrenamiento">Longest run ever</label>
+          <input type="text" id="f-max-distancia" placeholder="e.g. 21 km">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="field-grid">
+        <div class="field">
+          <label data-en="Access to hills?" data-es="¿Acceso a colinas?">Hills access?</label>
+          <select id="f-colinas">
+            <option value="">-- Select --</option>
+            <option value="Yes/Sí">Yes / Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-en="Access to treadmill?" data-es="¿Acceso a cinta?">Treadmill access?</label>
+          <select id="f-cinta">
+            <option value="">-- Select --</option>
+            <option value="Yes/Sí">Yes / Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="subsection-label" data-en="Runner type" data-es="Tipo de corredor">Runner type</p>
+      <div class="runner-types">
+        <div class="runner-card" onclick="selectRunner('speedster',this)">
+          <div class="runner-icon">⚡</div>
+          <div class="runner-name">Speedster</div>
+          <div class="runner-desc" data-en="Better at fast pace, shorter races" data-es="Mejor en ritmo rápido, carreras cortas">Better at fast pace, shorter races</div>
+        </div>
+        <div class="runner-card" onclick="selectRunner('endurance',this)">
+          <div class="runner-icon">🏔️</div>
+          <div class="runner-name">Endurance Monster</div>
+          <div class="runner-desc" data-en="Thrives in long runs and high volume" data-es="Mejor en largas distancias y alto volumen">Thrives in long runs and high volume</div>
+        </div>
+        <div class="runner-card" onclick="selectRunner('combo',this)">
+          <div class="runner-icon">⚖️</div>
+          <div class="runner-name">Combo</div>
+          <div class="runner-desc" data-en="Performs equally well in short and long races" data-es="Se desempeña igual en distancias cortas y largas">Performs equally in short and long</div>
+        </div>
+      </div>
+      <input type="hidden" id="f-runner-type" value="">
+
+      <div class="divider"></div>
+      <div class="field-grid cols-1">
+        <div class="field">
+          <label data-en="Strengths as a runner" data-es="Fortalezas como corredor">Strengths</label>
+          <textarea id="f-fortalezas" placeholder="e.g. Consistent pace, good endurance..."></textarea>
+        </div>
+        <div class="field">
+          <label data-en="Areas that need improvement" data-es="Áreas que necesitan mejora">Areas to improve</label>
+          <textarea id="f-debilidades" placeholder="e.g. Speed, breathing control..."></textarea>
+        </div>
+        <div class="field">
+          <label data-en="Favorite hard workout" data-es="Entrenamiento duro favorito">Favorite hard workout</label>
+          <input type="text" id="f-favorito" placeholder="e.g. Tempo runs, hill repeats...">
+        </div>
+        <div class="field">
+          <label data-en="Least favorite hard workout" data-es="Entrenamiento duro menos favorito">Least favorite hard workout</label>
+          <input type="text" id="f-no-favorito" placeholder="e.g. Long intervals...">
+        </div>
+        <div class="field">
+          <label data-en="Cross-training (cycling, swimming, weights, etc.)" data-es="Entrenamiento complementario (ciclismo, natación, pesas, etc.)">Cross-training</label>
+          <textarea id="f-cross" placeholder="Describe other exercises and which days you do them..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. INJURIES -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">🩹</div>
+      <div class="section-title" data-en="Injury History" data-es="Historial de Lesiones">Injury History</div>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label data-en="Describe any running-related injuries (type, date, cause, duration, rehab)" data-es="Describa lesiones relacionadas con la carrera (tipo, fecha, causa, duración, rehabilitación)">Injury details</label>
+        <textarea id="f-lesiones" style="min-height:120px" placeholder="e.g. IT Band syndrome, March 2023, overtraining, 6 weeks, physio + rest..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. GOALS & RACE HISTORY -->
+  <div class="form-section">
+    <div class="section-header">
+      <div class="section-icon">🎯</div>
+      <div class="section-title" data-en="Goals & Race History" data-es="Objetivos e Historia de Carreras">Goals & Race History</div>
+    </div>
+    <div class="section-body">
+      <div class="field-grid cols-1">
+        <div class="field">
+          <label data-en="Long-term goal" data-es="Objetivo largo plazo">Long-term goal</label>
+          <textarea id="f-meta-largo" placeholder="e.g. Complete a marathon comfortably..."></textarea>
+        </div>
+        <div class="field">
+          <label data-en="Medium-term goal" data-es="Objetivo mediano plazo">Medium-term goal</label>
+          <textarea id="f-meta-medio" placeholder="e.g. Run a half marathon under 2:10..."></textarea>
+        </div>
+        <div class="field">
+          <label data-en="Short-term goal" data-es="Objetivo corto plazo">Short-term goal</label>
+          <textarea id="f-meta-corto" placeholder="e.g. Run 10K without stopping..."></textarea>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="subsection-label" data-en="Target race" data-es="Carrera objetivo">Target race</p>
+      <div class="field-grid cols-3">
+        <div class="field full-width">
+          <label data-en="Race name" data-es="Nombre de la competencia">Race name</label>
+          <input type="text" id="f-carrera-nombre" placeholder="e.g. Miami Marathon 2026">
+        </div>
+        <div class="field">
+          <label data-en="Distance" data-es="Distancia">Distance</label>
+          <select id="f-carrera-distancia">
+            <option value="">--</option>
+            <option value="5K">5K</option>
+            <option value="10K">10K</option>
+            <option value="21K">21K / Half</option>
+            <option value="42K">42K / Full</option>
+            <option value="Otra">Other / Otra</option>
+          </select>
+        </div>
+        <div class="field">
+          <label data-en="Race date" data-es="Fecha">Date</label>
+          <input type="date" id="f-carrera-fecha">
+        </div>
+        <div class="field">
+          <label data-en="Goal time" data-es="Tiempo objetivo">Goal time</label>
+          <input type="text" id="f-carrera-tiempo" placeholder="e.g. 2:10:00">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="subsection-label" data-en="Personal records" data-es="Marcas personales">Personal records (PRs)</p>
+      <div style="overflow-x:auto">
+        <table class="race-table">
+          <thead>
+            <tr>
+              <th data-en="Distance" data-es="Distancia">Distance</th>
+              <th data-en="Time" data-es="Tiempo">Time</th>
+              <th data-en="Year" data-es="Año">Year</th>
+              <th data-en="Race Name" data-es="Nombre de la Carrera">Race Name</th>
+            </tr>
+          </thead>
+          <tbody id="pr-table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="submit-section">
+    <h3 data-en="Ready to submit?" data-es="¿Listo para enviar?">Ready to submit?</h3>
+    <p data-en="Your coach will review your information and prepare your personalized diagnosis." data-es="Tu entrenador revisará tu información y preparará tu diagnóstico personalizado.">Your coach will review your information and prepare your personalized diagnosis.</p>
+    <button class="btn-submit" id="btn-submit" onclick="submitForm()">
+      <span data-en="Submit Form" data-es="Enviar Formulario">Submit Form</span>
+    </button>
+  </div>
+
+  </div><!-- /form-content -->
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <h2 data-en="Form submitted!" data-es="¡Formulario enviado!">Form submitted!</h2>
+    <p data-en="Thank you. Your coach will review your information and contact you soon." data-es="Gracias. Tu entrenador revisará tu información y se pondrá en contacto contigo pronto.">Thank you. Your coach will review your information and contact you soon.</p>
+  </div>
+
+</div><!-- /form-container -->
+
+<script>
+// ── LANGUAGE ──
+let currentLang = 'en';
+
+const translations = {
+  heroTitle: { en: 'Athlete Intake Form', es: 'Formulario del Atleta' },
+  heroSub: { en: 'Please answer each question as completely as possible. The more information you provide, the better your training plan will be tailored to your specific needs.', es: 'Por favor responde cada pregunta lo más completamente posible. Cuanta más información proporciones, mejor adaptado estará tu plan de entrenamiento.' },
+  progressLabels: { en: ['Personal Info','Health','Work','Nutrition','Training','Injuries','Goals'], es: ['Datos Personales','Salud','Trabajo','Alimentación','Entrenamiento','Lesiones','Objetivos'] }
+};
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(lang)));
+  document.getElementById('hero-title').textContent = translations.heroTitle[lang];
+  document.getElementById('hero-sub').textContent = translations.heroSub[lang];
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = el.getAttribute(`data-${lang}`) || el.getAttribute('data-en');
+  });
+  buildHealthQuestions();
+  buildMealTable();
+  buildPRTable();
+  updateProgress(currentStep);
+}
+
+// ── HEALTH QUESTIONS ──
+const healthQuestions = {
+  en: [
+    'Personal or family history of heart disease or at risk?',
+    'Personal or family history of cognitive dysfunction (Alzheimer\'s)?',
+    'Do you regularly consume enriched foods or flour? Do you have chronic anemia?',
+    'Do you experience feelings of depression once a week or more?',
+    'Do you consume more than one alcoholic drink per day? (Women: low estrogen or HDL levels?)',
+    'Are your stress levels high?',
+    'Have you had chronic injuries in the last 3 years?',
+    'Are you often tired? Have you regressed in training or competition in the last year?',
+    'Do you sleep less than seven hours or experience interruptions?',
+    'Do you have a low-fat or low-protein diet? Do you get frequent colds or flu?',
+    'Do you have symptoms of allergies or asthma?',
+    'Is your resting, training or acceleration heart rate too high?',
+    'Women: Frequent missed periods, PMS or menopause symptoms?',
+    'Have you had a general medical exam in the last year?'
+  ],
+  es: [
+    '¿Tiene antecedentes personales o familiares de enfermedad cardíaca o está en riesgo?',
+    '¿Tiene antecedentes personales o familiares de disfunción cognitiva como Alzheimer?',
+    '¿Consume alimentos enriquecidos o harina con regularidad? ¿Tiene anemia crónica?',
+    '¿Experimenta sentimientos de depresión una vez a la semana o más?',
+    '¿Consume más de una bebida alcohólica al día? (Mujeres: ¿niveles bajos de estrógeno o HDL?)',
+    '¿Son altos sus niveles de estrés?',
+    '¿Ha sufrido lesiones crónicas durante los últimos 3 años?',
+    '¿Está a menudo cansado? ¿Ha retrocedido en entrenamiento o competición en el último año?',
+    '¿Duermes menos de siete horas o experimentas interrupciones?',
+    '¿Tiene una dieta baja en grasas o en proteínas? ¿Tiene gripe o resfriados con frecuencia?',
+    '¿Tiene síntomas de alergias o asma?',
+    '¿Su frecuencia cardíaca en reposo, entrenamiento o aceleración es demasiado alta?',
+    'Mujeres: ¿Frecuentes pérdidas de períodos, síndrome premenstrual o síntomas de la menopausia?',
+    '¿Se ha realizado un examen médico general durante el último año?'
+  ]
+};
+
+let healthAnswers = {};
+
+function buildHealthQuestions() {
+  const container = document.getElementById('health-questions');
+  const questions = healthQuestions[currentLang];
+  container.innerHTML = questions.map((q, i) => `
+    <div class="yn-row">
+      <div class="yn-question">${q}</div>
+      <div class="yn-options">
+        <button class="yn-btn ${healthAnswers[i]==='Si'?'selected-yes':''}" onclick="setHealth(${i},'Si',this)">${currentLang==='en'?'Yes':'Sí'}</button>
+        <button class="yn-btn ${healthAnswers[i]==='No'?'selected-no':''}" onclick="setHealth(${i},'No',this)">No</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setHealth(idx, val, btn) {
+  healthAnswers[idx] = val;
+  const row = btn.closest('.yn-row');
+  row.querySelectorAll('.yn-btn').forEach(b => b.className = 'yn-btn');
+  btn.className = `yn-btn ${val==='Si'?'selected-yes':'selected-no'}`;
+}
+
+// ── MEAL TABLE ──
+const mealRows = { en: ['Breakfast','Lunch','Dinner'], es: ['Desayuno','Almuerzo','Cena'] };
+const days = { en: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], es: ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] };
+
+function buildMealTable() {
+  const body = document.getElementById('meal-body');
+  const rows = mealRows[currentLang];
+  body.innerHTML = rows.map((r, ri) => `
+    <tr>
+      <td>${r}</td>
+      ${[0,1,2,3,4,5,6].map(d => `<td><input type="text" id="meal-${ri}-${d}" value="${document.getElementById('meal-'+ri+'-'+d)?.value||''}"></td>`).join('')}
+    </tr>
+  `).join('');
+}
+
+// ── PR TABLE ──
+const distances = ['800m','Mile/1500m','3000m','5K','10K','15K','Half Marathon','Marathon'];
+
+function buildPRTable() {
+  const body = document.getElementById('pr-table-body');
+  body.innerHTML = distances.map((d, i) => `
+    <tr>
+      <td style="padding:0.5rem 0.75rem;font-size:0.78rem;color:var(--r4f-muted);background:var(--r4f-cream);border:1px solid var(--r4f-border)">${d}</td>
+      <td style="border:1px solid var(--r4f-border)"><input type="text" id="pr-time-${i}" placeholder="0:00:00" style="width:100%;border:none;background:transparent;font-size:0.8rem;padding:0.35rem 0.5rem;outline:none;color:var(--r4f-text)"></td>
+      <td style="border:1px solid var(--r4f-border)"><input type="text" id="pr-year-${i}" placeholder="2024" style="width:100%;border:none;background:transparent;font-size:0.8rem;padding:0.35rem 0.5rem;outline:none;color:var(--r4f-text)"></td>
+      <td style="border:1px solid var(--r4f-border)"><input type="text" id="pr-race-${i}" placeholder="Race name..." style="width:100%;border:none;background:transparent;font-size:0.8rem;padding:0.35rem 0.5rem;outline:none;color:var(--r4f-text)"></td>
+    </tr>
+  `).join('');
+}
+
+// ── RUNNER TYPE ──
+function selectRunner(type, el) {
+  document.querySelectorAll('.runner-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('f-runner-type').value = type;
+}
+
+// ── PHOTO ──
+let photoBase64 = '';
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    photoBase64 = e.target.result;
+    const preview = document.getElementById('photo-preview');
+    preview.innerHTML = `<img src="${photoBase64}" alt="photo">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── PROGRESS ──
+let currentStep = 1;
+function updateProgress(step) {
+  const labels = translations.progressLabels[currentLang];
+  for (let i = 1; i <= 7; i++) {
+    const el = document.getElementById(`p${i}`);
+    el.className = 'progress-step' + (i < step ? ' done' : i === step ? ' active' : '');
+  }
+  document.getElementById('progress-label').textContent = labels[step-1] || '';
+}
+
+// Track scroll progress
+window.addEventListener('scroll', () => {
+  const sections = document.querySelectorAll('.form-section');
+  const scrollY = window.scrollY + window.innerHeight * 0.4;
+  sections.forEach((s, i) => {
+    if (scrollY > s.offsetTop) currentStep = Math.min(i + 1, 7);
+  });
+  updateProgress(currentStep);
+});
+
+// ── COLLECT FORM DATA ──
+function collectFormData() {
+  const questions = healthQuestions[currentLang];
+  const healthSummary = questions.map((q, i) => `${q}: ${healthAnswers[i] || 'No response'}`).join('\n');
+
+  const meals = ['Breakfast/Desayuno','Lunch/Almuerzo','Dinner/Cena'].map((meal, ri) =>
+    `${meal}: ` + [0,1,2,3,4,5,6].map(d => document.getElementById(`meal-${ri}-${d}`)?.value || '').filter(v=>v).join(' | ')
+  ).join('\n');
+
+  const prs = distances.map((d, i) => {
+    const t = document.getElementById(`pr-time-${i}`)?.value;
+    const y = document.getElementById(`pr-year-${i}`)?.value;
+    const r = document.getElementById(`pr-race-${i}`)?.value;
+    return t ? `${d}: ${t} (${y}) - ${r}` : null;
+  }).filter(Boolean).join('\n');
+
+  const dob = document.getElementById('f-nacimiento').value;
+  const age = dob ? Math.floor((new Date() - new Date(dob)) / (365.25*24*60*60*1000)) : 'N/A';
+
+  return `
+FORMULARIO DE INFORMACIÓN DEL ATLETA — Running.4.Fitness
+========================================================
+
+DATOS PERSONALES:
+Nombre: ${document.getElementById('f-nombre').value} ${document.getElementById('f-apellido').value}
+Género: ${document.getElementById('f-genero').value}
+Fecha de Nacimiento: ${dob} (Edad: ${age} años)
+Estatura: ${document.getElementById('f-estatura').value} cm
+% Grasa Corporal: ${document.getElementById('f-grasa').value}%
+Email: ${document.getElementById('f-email').value}
+Teléfono: ${document.getElementById('f-telefono').value}
+
+INFORMACIÓN DE SALUD:
+${healthSummary}
+Medicamentos: ${document.getElementById('f-medicamentos').value || 'Ninguno reportado'}
+
+ACTIVIDAD LABORAL Y ESTRÉS:
+Trabajo: ${document.getElementById('f-trabajo').value}
+Nivel de estrés: ${document.getElementById('f-estres-nivel').value}
+Descripción: ${document.getElementById('f-estres-desc').value}
+
+ALIMENTACIÓN:
+${meals}
+Meriendas: ${document.getElementById('f-meriendas').value}
+
+HISTORIAL DE ENTRENAMIENTO:
+Volumen semanal (últimas 8 semanas): ${document.getElementById('f-volumen').value}
+Carrera larga: ${document.getElementById('f-larga').value}
+Entrenamientos de intensidad: ${document.getElementById('f-intensidad').value}
+Unidades preferidas: ${document.getElementById('f-unidades').value}
+Promedio últimos 6 meses: ${document.getElementById('f-vol6m').value}
+Promedio últimas 10 semanas: ${document.getElementById('f-vol10w').value}
+Máximo volumen semanal: ${document.getElementById('f-volmax').value}
+Ritmo fácil: ${document.getElementById('f-ritmo-facil').value}
+Ritmo tempo: ${document.getElementById('f-ritmo-tempo').value}
+Ritmo intervalos: ${document.getElementById('f-ritmo-intervalos').value}
+Sesiones intensas por semana: ${document.getElementById('f-sesiones-intensas').value}
+Días de descanso: ${document.getElementById('f-descanso').value}
+Día de carrera larga: ${document.getElementById('f-dia-larga').value}
+Mayor distancia en entrenamiento: ${document.getElementById('f-max-distancia').value}
+Acceso a colinas: ${document.getElementById('f-colinas').value}
+Acceso a cinta: ${document.getElementById('f-cinta').value}
+Tipo de corredor: ${document.getElementById('f-runner-type').value}
+Fortalezas: ${document.getElementById('f-fortalezas').value}
+Áreas a mejorar: ${document.getElementById('f-debilidades').value}
+Entrenamiento favorito: ${document.getElementById('f-favorito').value}
+Entrenamiento menos favorito: ${document.getElementById('f-no-favorito').value}
+Entrenamiento complementario: ${document.getElementById('f-cross').value}
+
+LESIONES:
+${document.getElementById('f-lesiones').value || 'Ninguna reportada'}
+
+OBJETIVOS:
+Largo plazo: ${document.getElementById('f-meta-largo').value}
+Mediano plazo: ${document.getElementById('f-meta-medio').value}
+Corto plazo: ${document.getElementById('f-meta-corto').value}
+Carrera objetivo: ${document.getElementById('f-carrera-nombre').value}
+Distancia objetivo: ${document.getElementById('f-carrera-distancia').value}
+Fecha objetivo: ${document.getElementById('f-carrera-fecha').value}
+Tiempo objetivo: ${document.getElementById('f-carrera-tiempo').value}
+
+MARCAS PERSONALES:
+${prs || 'No reportadas'}
+`.trim();
+}
+
+// ── SUPABASE CONFIG ──
+const SUPABASE_URL = 'https://prrznnyrjsllklhtlpuv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_EEaVS0iNzEhkg7whEWuwYw_wJsPvz_o';
+const ZAPIER_WEBHOOK = 'https://hooks.zapier.com/hooks/catch/27163635/u7k5o5n/';
+
+// ── SUBMIT ──
+async function submitForm() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { alert(currentLang==='en'?'Please enter your first name.':'Por favor ingresa tu nombre.'); return; }
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.querySelector('span').textContent = currentLang==='en' ? 'Sending...' : 'Enviando...';
+
+  const formData = collectFormData();
+  const atletaNombre = `${document.getElementById('f-nombre').value.trim()} ${document.getElementById('f-apellido').value.trim()}`.trim();
+  const atletaEmail = document.getElementById('f-email').value.trim();
+
+  try {
+    // Save to Supabase
+    await fetch(`${SUPABASE_URL}/rest/v1/formularios`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        nombre: atletaNombre,
+        email: atletaEmail,
+        inventario: formData,
+        status: 'pending'
+      })
+    });
+
+    // Notify via Zapier webhook
+    const params = new URLSearchParams();
+    params.append('nombre', atletaNombre);
+    params.append('email', atletaEmail);
+    params.append('fecha', new Date().toLocaleDateString('es-ES', {day:'2-digit', month:'long', year:'numeric'}));
+    params.append('resumen', formData.substring(0, 500) + '...');
+
+    await fetch(ZAPIER_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+
+  } catch(e) {
+    console.error('Submit error:', e);
+  }
+
+  document.getElementById('form-content').style.display = 'none';
+  document.getElementById('success-screen').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── INIT ──
+buildHealthQuestions();
+buildMealTable();
+buildPRTable();
+updateProgress(1);
+</script>
+</body>
+</html>
