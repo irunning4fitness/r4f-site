@@ -655,6 +655,7 @@ function setLang(l){
 // ══════════════════════════════════════════════════
 const SUPABASE_URL = 'https://prrznnyrjsllklhtlpuv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_EEaVS0iNzEhkg7whEWuwYw_wJsPvz_o';
+const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/27163635/4hit49h/';
 
 let currentMode='patch', currentResult=null;
 async function loadHistory(){try{const raw=localStorage.getItem('r4f_sessions');return raw?JSON.parse(raw):[]}catch(e){console.error('loadHistory failed:',e);return[]}}
@@ -712,6 +713,15 @@ PLAN DE REPOSICIÓN — ENTRENAMIENTO:
       body:JSON.stringify({nombre:r.name,email:'',inventario:resumen,status:'pending'})
     });
     if(!res.ok) throw new Error('Error al guardar en base de datos');
+
+    // Notificación por email al entrenador (best-effort — no bloquea el flujo si falla)
+    try{
+      await fetch(ZAPIER_WEBHOOK_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({nombre:r.name,ciudad:r.city||'',fecha:r.date||'',resumen})
+      });
+    }catch(zapErr){ console.error('Notificación Zapier falló (no crítico):', zapErr); }
 
     label.textContent=lang==='es'?'✓ ¡Enviado al entrenador!':'✓ Sent to coach!';
     btn.style.background='#3a8f1a';
