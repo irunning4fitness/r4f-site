@@ -232,6 +232,38 @@
   .yn-btn.yes { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); font-weight: 600; }
   .yn-btn.no { background: rgba(26,37,64,0.06); border-color: var(--navy); color: var(--navy); font-weight: 600; }
 
+  /* MAFFETONE CATEGORY (single choice) */
+  .cat-intro { font-size: 0.78rem; color: var(--muted); line-height: 1.5; margin-bottom: 0.85rem; }
+  .cat-option {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: white;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cat-option:hover { border-color: var(--blue); }
+  .cat-option.selected { background: var(--orange-dim); border-color: var(--orange); }
+  .cat-pts {
+    font-weight: 700; font-size: 0.85rem; color: var(--navy);
+    background: var(--cream); border-radius: 8px; padding: 0.45rem 0; text-align: center;
+  }
+  .cat-option.selected .cat-pts { background: var(--orange); color: white; }
+  .cat-text { font-size: 0.8rem; color: var(--text); line-height: 1.45; }
+  .cat-note {
+    font-size: 0.75rem; color: var(--navy); background: rgba(74,159,212,0.10);
+    border: 1px solid rgba(74,159,212,0.3); border-radius: 8px; padding: 0.6rem 0.8rem; margin-top: 0.5rem;
+  }
+  .opt-label { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
   /* CALCULATE BUTTON */
   .btn-calc {
     width: 100%;
@@ -412,6 +444,7 @@
   .btn-recalc:hover { color: var(--text); border-color: var(--text); }
 
   @media (max-width: 480px) {
+    .yn-row { grid-template-columns: 1fr; gap: 0.5rem; }
     .print-zones-grid { grid-template-columns: repeat(3, 1fr); }
     .zone-item { grid-template-columns: 70px 1fr 70px; }
   }
@@ -493,7 +526,7 @@
       </div>
     </div>
 
-    <!-- HEALTH QUESTIONS -->
+    <!-- HEALTH / TRAINING HISTORY: ONE Maffetone category -->
     <div class="card">
       <div class="card-header">
         <div class="card-icon">❤️</div>
@@ -501,6 +534,30 @@
       </div>
       <div class="card-body" id="questions-container">
         <!-- injected by JS -->
+      </div>
+    </div>
+
+    <!-- OPTIONAL TEST DATA -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🧪</div>
+        <div class="card-title" data-en="Test data (optional)" data-es="Datos de test (opcional)">Test data (optional)</div>
+      </div>
+      <div class="card-body">
+        <div class="age-field" style="margin-bottom:1rem">
+          <label><span data-en="Threshold heart rate (FTHR) from your R4F test" data-es="FC de umbral (FTHR) de tu test R4F">Threshold heart rate (FTHR) from your R4F test</span></label>
+          <div class="age-input-wrap">
+            <input type="number" id="fthr" min="100" max="210" placeholder="—">
+            <span class="age-hint" data-en="bpm — sets Zones 3–5" data-es="lpm — define Zonas 3–5">bpm — sets Zones 3–5</span>
+          </div>
+        </div>
+        <div class="age-field">
+          <label><span data-en="Highest heart rate you have actually recorded" data-es="FC más alta que has registrado realmente">Highest heart rate you have actually recorded</span></label>
+          <div class="age-input-wrap">
+            <input type="number" id="maxhr" min="120" max="230" placeholder="—">
+            <span class="age-hint" data-en="bpm — replaces the formula estimate" data-es="lpm — reemplaza la estimación por fórmula">bpm — replaces the formula estimate</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -528,7 +585,7 @@
       </div>
       <div class="maf-divider"></div>
       <div class="maf-side">
-        <div class="label" data-en="Max HR (theoretical)" data-es="FC Máx (teórica)">Max HR</div>
+        <div class="label" id="res-max-label">Max HR</div>
         <div class="value" id="res-max">—</div>
         <div class="unit">bpm</div>
       </div>
@@ -578,45 +635,79 @@ const SUPABASE_KEY = 'sb_publishable_EEaVS0iNzEhkg7whEWuwYw_wJsPvz_o';
 const ZAPIER_WEBHOOK = 'https://hooks.zapier.com/hooks/catch/27163635/uvoc4ny/';
 
 let currentLang = 'en';
-let answers = {};
+let selectedCat = null; // 'a' | 'b' | 'c' | 'd' — Maffetone: choose ONE category, never add them up
+let senior65 = null;    // 0 | 5 | 10 — answer to the 65+ question
 
-const questions = {
-  en: [
-    'Have you had an illness or injury lasting more than 3 weeks in the past year, or do you take regular medication?',
-    'Have you had more than two colds/injuries lasting more than 3 days in the past year, or an injury that altered your training?',
-    'Have you been training consistently without the above problems for the past two years?',
-    'Have you experienced consistent progress over the past 12 months?',
-    'Are you 65 years of age or older?',
-    'Are you 16 years of age or younger?'
-  ],
-  es: [
-    '¿Ha tenido una enfermedad o lesión que duró más de 3 semanas en el último año, o toma medicamentos con regularidad?',
-    '¿Ha tenido más de dos resfriados/lesiones de más de 3 días en el último año, o una lesión que alteró su entrenamiento?',
-    '¿Ha entrenado de forma constante sin los problemas anteriores durante los últimos dos años?',
-    '¿Ha experimentado progresos constantes durante los últimos 12 meses?',
-    '¿Tiene 65 años de edad o más?',
-    '¿Tiene 16 años de edad o menos?'
-  ]
+// Maffetone 180 Formula: 180 − age, then ONE adjustment from a single category.
+const categories = {
+  a: { pts: -10,
+    en: 'Recovering from a major illness (heart disease, any surgery or hospital stay) or taking regular medication.',
+    es: 'En recuperación de una enfermedad importante (cardíaca, cualquier cirugía u hospitalización) o tomando medicación de forma regular.' },
+  b: { pts: -5,
+    en: 'Injured now or recently, regressed or not improving, more than two colds/flu per year, allergies or asthma, inconsistent training, or just starting (first 2 years).',
+    es: 'Lesión actual o reciente, retroceso o estancamiento, más de dos resfriados/gripes al año, alergias o asma, entrenamiento inconsistente, o recién empezando (primeros 2 años).' },
+  c: { pts: 0,
+    en: 'Training consistently (at least 4 times a week) for up to two years without any of the problems above.',
+    es: 'Entrenando de forma constante (al menos 4 veces por semana) hasta dos años sin ninguno de los problemas anteriores.' },
+  d: { pts: +5,
+    en: 'Training for MORE than two years without any of the problems above AND improving in competition.',
+    es: 'Entrenando MÁS de dos años sin ninguno de los problemas anteriores Y mejorando en competencia.' }
 };
 
-const adjustments = {
-  en: [
-    { q: 0, val: 'Si', pts: -10, label: '−10: illness/injury or medication' },
-    { q: 1, val: 'Si', pts: -5,  label: '−5: more than two colds/injuries in the year' },
-    { q: 2, val: 'Si', pts: +5,  label: '+5: consistent training without problems (2 years)' },
-    { q: 3, val: 'Si', pts: +5,  label: '+5: consistent progress last 12 months' },
-    { q: 4, val: 'Si', pts: +5,  label: '+5: age 65 or older' },
-    { q: 5, val: 'Si', pts: +5,  label: '+5: age 16 or younger' },
-  ],
-  es: [
-    { q: 0, val: 'Si', pts: -10, label: '−10: enfermedad/lesión o medicamentos' },
-    { q: 1, val: 'Si', pts: -5,  label: '−5: más de dos resfriados/lesiones en el año' },
-    { q: 2, val: 'Si', pts: +5,  label: '+5: entrenamiento consistente sin problemas (2 años)' },
-    { q: 3, val: 'Si', pts: +5,  label: '+5: progresos constantes últimos 12 meses' },
-    { q: 4, val: 'Si', pts: +5,  label: '+5: mayor de 65 años' },
-    { q: 5, val: 'Si', pts: +5,  label: '+5: menor de 16 años' },
-  ]
-};
+// Pure calculation — easy to test. Returns MAF, range, max HR and 5 zones.
+function computeZones({ edad, cat, senior = 0, fthr, maxMeasured }) {
+  let maf, adjLabel, seniorLabel = null;
+  if (edad <= 16) {
+    maf = 165; // Maffetone: formula does not apply to 16 and younger
+    adjLabel = { en: '16 or younger: fixed MAF HR of 165 (formula does not apply)', es: '16 años o menos: FC MAF fija de 165 (la fórmula no aplica)' };
+  } else {
+    const pts = categories[cat].pts;
+    maf = 180 - edad + pts;
+    const sign = pts > 0 ? '+' + pts : (pts < 0 ? '−' + Math.abs(pts) : '0');
+    adjLabel = { en: `${sign}: category ${cat.toUpperCase()}`, es: `${sign}: categoría ${cat.toUpperCase()}` };
+    // Age 65+: Maffetone allows adding up to +10 on top of the category, individually
+    if (edad >= 65 && senior > 0) {
+      maf += senior;
+      seniorLabel = { en: `+${senior}: age 65 or older`, es: `+${senior}: 65 años o más` };
+    }
+  }
+
+  const maxEstimated = 208.75 - (0.75 * edad);
+  const maxHR = maxMeasured ? maxMeasured : maxEstimated;
+
+  // Z1–Z2 from MAF (Maffetone aerobic range = MAF−10 to MAF)
+  const z1High = maf - 11;
+  const z2Low = maf - 10;
+  const z2High = maf;
+
+  // Z3–Z5 from FTHR if known; otherwise from max HR (original R4F factors)
+  let z3High, z4High;
+  if (fthr) {
+    z3High = Math.round(fthr * 0.94);
+    z4High = fthr - 1;
+  } else {
+    z3High = Math.round(maxEstimated * 1.025 * 0.87);
+    z4High = Math.round(maxEstimated * 1.025 * 0.93);
+  }
+  // Keep zones in order even for unusual inputs
+  z3High = Math.max(z3High, z2High + 1);
+  z4High = Math.max(z4High, z3High + 1);
+  const z5Low = z4High + 1;
+  const z5High = Math.max(Math.round(maxMeasured ? maxMeasured : maxEstimated * 1.07 * 1.025), z5Low);
+
+  return {
+    maf, adjLabel, seniorLabel,
+    rangeLow: maf - 10, rangeHigh: maf,
+    maxHR: Math.round(maxHR), maxIsMeasured: !!maxMeasured,
+    zones: [
+      { low: 0,          high: z1High },
+      { low: z2Low,      high: z2High },
+      { low: z2High + 1, high: z3High },
+      { low: z3High + 1, high: z4High },
+      { low: z5Low,      high: z5High },
+    ]
+  };
+}
 
 const zoneData = {
   en: [
@@ -650,32 +741,69 @@ function setLang(lang) {
 
 function buildQuestions() {
   const container = document.getElementById('questions-container');
-  const qs = questions[currentLang];
-  const yesLabel = currentLang === 'en' ? 'Yes' : 'Sí';
-  container.innerHTML = qs.map((q, i) => `
-    <div class="yn-row">
-      <div class="yn-question">${q}</div>
-      <div class="yn-btns">
-        <button class="yn-btn ${answers[i]==='Si'?'yes':''}" onclick="setAnswer(${i},'Si',this)">${yesLabel}</button>
-        <button class="yn-btn ${answers[i]==='No'?'no':''}" onclick="setAnswer(${i},'No',this)">No</button>
-      </div>
+  const intro = currentLang === 'en'
+    ? 'Choose the ONE option that best describes you. If you are between two, choose the lower one.'
+    : 'Elige UNA sola opción, la que mejor te describa. Si dudas entre dos, elige la de menor valor.';
+  const opts = ['a','b','c','d'].map(k => {
+    const c = categories[k];
+    const pts = c.pts > 0 ? '+' + c.pts : (c.pts < 0 ? '−' + Math.abs(c.pts) : '0');
+    return `<button type="button" class="cat-option ${selectedCat===k?'selected':''}" onclick="selectCat('${k}')">
+      <div class="cat-pts">${pts}</div>
+      <div class="cat-text">${c[currentLang]}</div>
+    </button>`;
+  }).join('');
+  // Age 65+ question (always visible; must match the age entered)
+  const en = currentLang === 'en';
+  const q65 = en
+    ? 'Are you 65 years of age or older? (Maffetone allows adding up to +10, depending on fitness)'
+    : '¿Tienes 65 años de edad o más? (Maffetone permite sumar hasta +10, según tu condición física)';
+  const s65 = [
+    { v: 0,  label: 'No' },
+    { v: 5,  label: en ? 'Yes +5' : 'Sí +5' },
+    { v: 10, label: en ? 'Yes +10' : 'Sí +10' },
+  ].map(o => `<button type="button" class="yn-btn ${senior65===o.v ? (o.v ? 'yes' : 'no') : ''}" onclick="setSenior(${o.v})">${o.label}</button>`).join('');
+  const hint65 = en
+    ? '+5 for most runners 65+; +10 only if you are in good shape and your coach agrees.'
+    : '+5 para la mayoría de corredores de 65+; +10 solo con buena condición física y visto bueno del entrenador.';
+  const note16 = en
+    ? 'Age 16 or younger: the formula does not apply; a fixed MAF HR of 165 is used.'
+    : '16 años o menos: la fórmula no aplica; se usa una FC MAF fija de 165.';
+  container.innerHTML = `<div class="cat-intro">${intro}</div>${opts}
+    <div class="yn-row" style="border-bottom:none;margin-top:0.5rem">
+      <div class="yn-question">${q65}<div style="font-size:0.7rem;color:var(--muted);margin-top:0.2rem">${hint65}</div></div>
+      <div class="yn-btns">${s65}</div>
     </div>
-  `).join('');
+    <div class="cat-note" id="age-warning" style="display:none;border-color:rgba(229,62,62,0.4);background:rgba(229,62,62,0.08);color:#b02a2a"></div>
+    <div class="cat-note">${note16}</div>`;
+  checkReady();
 }
 
-function setAnswer(idx, val, btn) {
-  answers[idx] = val;
-  const row = btn.closest('.yn-row');
-  row.querySelectorAll('.yn-btn').forEach(b => { b.classList.remove('yes','no'); });
-  btn.classList.add(val === 'Si' ? 'yes' : 'no');
+function setSenior(v) {
+  senior65 = v;
+  buildQuestions();
+}
+
+function selectCat(k) {
+  selectedCat = k;
+  buildQuestions();
   checkReady();
 }
 
 function checkReady() {
   const edad = parseInt(document.getElementById('edad').value);
   const nombre = document.getElementById('atleta-nombre').value.trim();
-  const allAnswered = Object.keys(answers).length === 6;
-  document.getElementById('btn-calc').disabled = !(edad >= 10 && edad <= 90 && allAnswered && nombre);
+  const catOk = selectedCat !== null || edad <= 16;
+  const seniorAnswered = senior65 !== null;
+  // Answer must match the age entered
+  let mismatch = '';
+  if (seniorAnswered && edad >= 10) {
+    const en = currentLang === 'en';
+    if (senior65 > 0 && edad < 65) mismatch = en ? 'You answered "Yes" to 65+, but your age is under 65. Please check.' : 'Respondiste "Sí" a 65 o más, pero tu edad es menor de 65. Revisa por favor.';
+    if (senior65 === 0 && edad >= 65) mismatch = en ? 'Your age is 65 or older: please answer "Yes +5" or "Yes +10".' : 'Tu edad es de 65 o más: responde "Sí +5" o "Sí +10".';
+  }
+  const warn = document.getElementById('age-warning');
+  if (warn) { warn.textContent = mismatch; warn.style.display = mismatch ? 'block' : 'none'; }
+  document.getElementById('btn-calc').disabled = !(edad >= 10 && edad <= 90 && catOk && seniorAnswered && !mismatch && nombre);
 }
 
 let lastZonesData = null;
@@ -684,58 +812,48 @@ function calculate() {
   const edad = parseInt(document.getElementById('edad').value);
   const nombre = document.getElementById('atleta-nombre').value.trim();
   const email = document.getElementById('atleta-email').value.trim();
-  let maf = 180 - edad;
-  const adjs = adjustments[currentLang];
-  const applied = [];
+  const fthr = parseInt(document.getElementById('fthr').value) || null;
+  const maxMeasured = parseInt(document.getElementById('maxhr').value) || null;
 
-  adjs.forEach(a => {
-    if (answers[a.q] === a.val) { maf += a.pts; applied.push(a.label); }
-  });
+  const r = computeZones({ edad, cat: selectedCat, senior: senior65 || 0, fthr, maxMeasured });
+  const maf = r.maf;
+  const zones = r.zones;
+  const applied = [r.adjLabel[currentLang]];
+  if (r.seniorLabel) applied.push(r.seniorLabel[currentLang]);
 
-  const maxHR = 208.75 - (0.75 * edad);
-  const z1High = Math.round(maxHR * 1.025 * 0.6);
-  const z2Low  = z1High + 1;
-  const z2High = Math.round(maf);
-  const z3Low  = z2High + 1;
-  const z3High = Math.round(maxHR * 1.025 * 0.87);
-  const z4Low  = z3High + 1;
-  const z4High = Math.round(maxHR * 1.025 * 0.93);
-  const z5Low  = z4High + 1;
-  const z5High = Math.round(maxHR * 1.07 * 1.025);
-
-  const zones = [
-    { low: 0,     high: z1High },
-    { low: z2Low, high: z2High },
-    { low: z3Low, high: z3High },
-    { low: z4Low, high: z4High },
-    { low: z5Low, high: z5High },
-  ];
-
-  lastZonesData = { nombre, email, edad, maf, maxHR: Math.round(maxHR), ajustes: applied, zonas: zones, answers: {...answers} };
+  lastZonesData = {
+    nombre, email, edad, maf,
+    rango: `${r.rangeLow}–${r.rangeHigh}`,
+    maxHR: r.maxHR, maxMedida: r.maxIsMeasured,
+    fthr, categoria: edad <= 16 ? '≤16' : selectedCat.toUpperCase(),
+    ajustes: [r.adjLabel.es].concat(r.seniorLabel ? [r.seniorLabel.es] : []), zonas: zones
+  };
 
   document.getElementById('res-maf').textContent = maf;
-  document.getElementById('res-range').textContent = `${maf-5}–${maf}`;
-  document.getElementById('res-max').textContent = Math.round(maxHR);
+  document.getElementById('res-range').textContent = `${r.rangeLow}–${r.rangeHigh}`;
+  document.getElementById('res-max').textContent = r.maxHR;
+  document.getElementById('res-max-label').textContent = r.maxIsMeasured
+    ? (currentLang === 'en' ? 'Max HR (measured)' : 'FC Máx (medida)')
+    : (currentLang === 'en' ? 'Max HR (estimated)' : 'FC Máx (estimada)');
 
   const adjBox = document.getElementById('adj-box');
-  if (applied.length) {
-    document.getElementById('adj-list').innerHTML = applied.map(a => `<div class="adj-item">• ${a}</div>`).join('');
-    adjBox.style.display = 'block';
-  } else { adjBox.style.display = 'none'; }
+  document.getElementById('adj-list').innerHTML = applied.map(a => `<div class="adj-item">• ${a}</div>`).join('')
+    + (fthr ? `<div class="adj-item">• ${currentLang === 'en' ? 'Zones 3–5 from FTHR' : 'Zonas 3–5 según FTHR'} ${fthr}</div>` : '');
+  adjBox.style.display = 'block';
 
   const zd = zoneData[currentLang];
   document.getElementById('zones-list').innerHTML = zones.map((z, i) => `
     <div class="zone-item ${zd[i].cls}">
       <div><div class="zone-name">${zd[i].name}</div><div style="font-size:0.68rem;color:var(--muted);margin-top:0.15rem">${zd[i].pct}</div></div>
       <div class="zone-desc">${zd[i].desc}</div>
-      <div class="zone-range">${z.low === 0 ? '<' + z.high : z.low + '–' + z.high}<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted)">bpm</span></div>
+      <div class="zone-range">${z.low === 0 ? '≤' + z.high : z.low + '–' + z.high}<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted)">bpm</span></div>
     </div>
   `).join('');
 
   document.getElementById('print-grid').innerHTML = zones.map((z, i) => `
     <div class="print-zone pz${i+1}">
       <div class="pz-name">${zd[i].name}</div>
-      <div class="pz-range">${z.low === 0 ? '<' + z.high : z.low + '–' + z.high}<br>bpm</div>
+      <div class="pz-range">${z.low === 0 ? '≤' + z.high : z.low + '–' + z.high}<br>bpm</div>
     </div>
   `).join('');
 
@@ -752,10 +870,9 @@ async function sendToCoach() {
 
   const d = lastZonesData;
   const zonasSummary = `ZONAS DE FC — ${d.nombre}
-Edad: ${d.edad} años | MAF HR: ${d.maf} bpm | Rango: ${d.maf-5}–${d.maf} bpm | FC Máx teórica: ${d.maxHR} bpm
-Ajustes: ${d.ajustes.length ? d.ajustes.join('; ') : 'Ninguno'}
-Zona 1: <${d.zonas[0].high} bpm | Zona 2 (MAF): ${d.zonas[1].low}–${d.zonas[1].high} bpm | Zona 3: ${d.zonas[2].low}–${d.zonas[2].high} bpm | Zona 4: ${d.zonas[3].low}–${d.zonas[3].high} bpm | Zona 5: ${d.zonas[4].low}–${d.zonas[4].high} bpm
-Q1:${d.answers[0]||'—'} Q2:${d.answers[1]||'—'} Q3:${d.answers[2]||'—'} Q4:${d.answers[3]||'—'} Q5:${d.answers[4]||'—'} Q6:${d.answers[5]||'—'}`;
+Edad: ${d.edad} años | MAF HR: ${d.maf} bpm | Rango: ${d.rango} bpm | FC Máx ${d.maxMedida ? 'medida' : 'estimada'}: ${d.maxHR} bpm | FTHR: ${d.fthr || '—'}
+Categoría Maffetone: ${d.categoria} | Ajuste: ${d.ajustes.join('; ')}
+Zona 1: <${d.zonas[0].high} bpm | Zona 2 (MAF): ${d.zonas[1].low}–${d.zonas[1].high} bpm | Zona 3: ${d.zonas[2].low}–${d.zonas[2].high} bpm | Zona 4: ${d.zonas[3].low}–${d.zonas[3].high} bpm | Zona 5: ${d.zonas[4].low}–${d.zonas[4].high} bpm`;
 
   try {
     // 1. Guardar en Supabase (crítico)
