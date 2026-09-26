@@ -636,7 +636,8 @@ const ZAPIER_WEBHOOK = 'https://hooks.zapier.com/hooks/catch/27163635/uvoc4ny/';
 
 let currentLang = 'en';
 let selectedCat = null; // 'a' | 'b' | 'c' | 'd' — Maffetone: choose ONE category, never add them up
-let senior65 = null;    // 0 | 5 | 10 — answer to the 65+ question
+let senior65 = null;    // 'no' | 'si' — answer to the 65+ question
+let d10 = false;        // 65+ in category D: raise adjustment from +5 up to +10
 
 // Maffetone 180 Formula: 180 − age, then ONE adjustment from a single category.
 const categories = {
@@ -655,21 +656,22 @@ const categories = {
 };
 
 // Pure calculation — easy to test. Returns MAF, range, max HR and 5 zones.
-function computeZones({ edad, cat, senior = 0, fthr, maxMeasured }) {
+function computeZones({ edad, cat, d10 = false, fthr, maxMeasured }) {
   let maf, adjLabel, seniorLabel = null;
   if (edad <= 16) {
     maf = 165; // Maffetone: formula does not apply to 16 and younger
     adjLabel = { en: '16 or younger: fixed MAF HR of 165 (formula does not apply)', es: '16 años o menos: FC MAF fija de 165 (la fórmula no aplica)' };
   } else {
-    const pts = categories[cat].pts;
+    let pts = categories[cat].pts;
+    // Maffetone: over 65, "up to 10 beats may have to be added for those ONLY in category (d)".
+    // Conservative reading: the category D adjustment can go up to +10 in total (not +15), after honest self-assessment.
+    const seniorD = edad >= 65 && cat === 'd' && d10;
+    if (seniorD) pts = 10;
     maf = 180 - edad + pts;
     const sign = pts > 0 ? '+' + pts : (pts < 0 ? '−' + Math.abs(pts) : '0');
-    adjLabel = { en: `${sign}: category ${cat.toUpperCase()}`, es: `${sign}: categoría ${cat.toUpperCase()}` };
-    // Age 65+: Maffetone allows adding up to +10 on top of the category, individually
-    if (edad >= 65 && senior > 0) {
-      maf += senior;
-      seniorLabel = { en: `+${senior}: age 65 or older`, es: `+${senior}: 65 años o más` };
-    }
+    adjLabel = seniorD
+      ? { en: `+10: category D, age 65+ (maximum allowed)`, es: `+10: categoría D con 65 años o más (máximo permitido)` }
+      : { en: `${sign}: category ${cat.toUpperCase()}`, es: `${sign}: categoría ${cat.toUpperCase()}` };
   }
 
   const maxEstimated = 208.75 - (0.75 * edad);
@@ -754,17 +756,29 @@ function buildQuestions() {
   }).join('');
   // Age 65+ question (always visible; must match the age entered)
   const en = currentLang === 'en';
-  const q65 = en
-    ? 'Are you 65 years of age or older? (Maffetone allows adding up to +10, depending on fitness)'
-    : '¿Tienes 65 años de edad o más? (Maffetone permite sumar hasta +10, según tu condición física)';
+  const q65 = en ? 'Are you 65 years of age or older?' : '¿Tienes 65 años de edad o más?';
   const s65 = [
-    { v: 0,  label: 'No' },
-    { v: 5,  label: en ? 'Yes +5' : 'Sí +5' },
-    { v: 10, label: en ? 'Yes +10' : 'Sí +10' },
-  ].map(o => `<button type="button" class="yn-btn ${senior65===o.v ? (o.v ? 'yes' : 'no') : ''}" onclick="setSenior(${o.v})">${o.label}</button>`).join('');
+    { v: 'no', label: 'No' },
+    { v: 'si', label: en ? 'Yes' : 'Sí' },
+  ].map(o => `<button type="button" class="yn-btn ${senior65===o.v ? (o.v==='si' ? 'yes' : 'no') : ''}" onclick="setSenior('${o.v}')">${o.label}</button>`).join('');
   const hint65 = en
-    ? '+5 for most runners 65+; +10 only if you are in good shape and your coach agrees.'
-    : '+5 para la mayoría de corredores de 65+; +10 solo con buena condición física y visto bueno del entrenador.';
+    ? 'Only runners 65+ in category D (+5) may raise the adjustment up to +10.'
+    : 'Solo los corredores de 65+ en la categoría D (+5) pueden subir el ajuste hasta +10.';
+  // Extra choice: only for 65+ in category D
+  let d10Row = '';
+  if (senior65 === 'si' && selectedCat === 'd') {
+    const qd = en
+      ? 'Category D and 65+: Maffetone allows up to +10 instead of +5. Only after an honest self-assessment — it is NOT automatic.'
+      : 'Categoría D y 65+: Maffetone permite hasta +10 en lugar de +5. Solo tras una autoevaluación honesta; NO es automático.';
+    const sd = [
+      { v: false, label: '+5' },
+      { v: true,  label: '+10' },
+    ].map(o => `<button type="button" class="yn-btn ${d10===o.v ? 'yes' : ''}" onclick="setD10(${o.v})">${o.label}</button>`).join('');
+    d10Row = `<div class="yn-row" style="border-bottom:none">
+      <div class="yn-question">${qd}</div>
+      <div class="yn-btns">${sd}</div>
+    </div>`;
+  }
   const note16 = en
     ? 'Age 16 or younger: the formula does not apply; a fixed MAF HR of 165 is used.'
     : '16 años o menos: la fórmula no aplica; se usa una FC MAF fija de 165.';
@@ -772,7 +786,7 @@ function buildQuestions() {
     <div class="yn-row" style="border-bottom:none;margin-top:0.5rem">
       <div class="yn-question">${q65}<div style="font-size:0.7rem;color:var(--muted);margin-top:0.2rem">${hint65}</div></div>
       <div class="yn-btns">${s65}</div>
-    </div>
+    </div>${d10Row}
     <div class="cat-note" id="age-warning" style="display:none;border-color:rgba(229,62,62,0.4);background:rgba(229,62,62,0.08);color:#b02a2a"></div>
     <div class="cat-note">${note16}</div>`;
   checkReady();
@@ -780,6 +794,12 @@ function buildQuestions() {
 
 function setSenior(v) {
   senior65 = v;
+  if (v !== 'si') d10 = false;
+  buildQuestions();
+}
+
+function setD10(v) {
+  d10 = v;
   buildQuestions();
 }
 
@@ -798,8 +818,8 @@ function checkReady() {
   let mismatch = '';
   if (seniorAnswered && edad >= 10) {
     const en = currentLang === 'en';
-    if (senior65 > 0 && edad < 65) mismatch = en ? 'You answered "Yes" to 65+, but your age is under 65. Please check.' : 'Respondiste "Sí" a 65 o más, pero tu edad es menor de 65. Revisa por favor.';
-    if (senior65 === 0 && edad >= 65) mismatch = en ? 'Your age is 65 or older: please answer "Yes +5" or "Yes +10".' : 'Tu edad es de 65 o más: responde "Sí +5" o "Sí +10".';
+    if (senior65 === 'si' && edad < 65) mismatch = en ? 'You answered "Yes" to 65+, but your age is under 65. Please check.' : 'Respondiste "Sí" a 65 o más, pero tu edad es menor de 65. Revisa por favor.';
+    if (senior65 === 'no' && edad >= 65) mismatch = en ? 'Your age is 65 or older: please answer "Yes".' : 'Tu edad es de 65 o más: responde "Sí".';
   }
   const warn = document.getElementById('age-warning');
   if (warn) { warn.textContent = mismatch; warn.style.display = mismatch ? 'block' : 'none'; }
@@ -815,7 +835,7 @@ function calculate() {
   const fthr = parseInt(document.getElementById('fthr').value) || null;
   const maxMeasured = parseInt(document.getElementById('maxhr').value) || null;
 
-  const r = computeZones({ edad, cat: selectedCat, senior: senior65 || 0, fthr, maxMeasured });
+  const r = computeZones({ edad, cat: selectedCat, d10, fthr, maxMeasured });
   const maf = r.maf;
   const zones = r.zones;
   const applied = [r.adjLabel[currentLang]];
