@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R4F — Planes y Servicios</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --r4f-dark:   #0d3461;
+    --r4f-blue:   #4a9fd4;
+    --r4f-green:  #4db825;
+    --r4f-orange: #f07820;
+    --r4f-bg:     #f4f6f9;
+    --r4f-card:   #ffffff;
+    --r4f-border: #dde3ec;
+    --r4f-muted:  #7a8ba0;
+    --r4f-text:   #1a2a3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--r4f-bg);
+    color: var(--r4f-text);
+    line-height: 1.6;
+  }
+
+  /* ── SECTION WRAPPERS ── */
+  .section {
+    padding: 2.5rem 1.5rem;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--r4f-border);
+    margin: 0;
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--r4f-muted);
+    margin-bottom: 0.4rem;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--r4f-dark);
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+  .section-desc {
+    font-size: 0.875rem;
+    color: var(--r4f-muted);
+    margin-bottom: 1.75rem;
+    max-width: 520px;
+  }
+
+  /* ══════════════════════════════════════════
+     SECCIÓN 1 — DIAGNÓSTICO INICIAL
+  ══════════════════════════════════════════ */
+  .diag-card {
+    background: var(--r4f-card);
+    border: 1px solid var(--r4f-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(13,52,97,0.08);
+  }
+
+  .diag-header {
+    background: linear-gradient(135deg, #0d3461 0%, #1a4d8c 100%);
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .diag-header-left {}
+  .diag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(240,120,32,0.20);
+    border: 1px solid rgba(240,120,32,0.40);
+    color: #f5943a;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    margin-bottom: 0.85rem;
+  }
+  .diag-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+  }
+  .diag-subtitle {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .diag-price-box {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .diag-price-label {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.2rem;
+  }
+  .diag-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    color: var(--r4f-orange);
+    line-height: 1;
+  }
+  .diag-price span {
+    font-size: 1rem;
+    vertical-align: top;
+    margin-top: 0.4rem;
+    display: inline-block;
+  }
+
+  .diag-body {
+    padding: 1.75rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.75rem;
+    align-items: start;
+  }
+
+  .diag-includes-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--r4f-muted);
+    margin-bottom: 0.9rem;
+  }
+  .diag-includes {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .diag-includes li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 0.875rem;
+    color: var(--r4f-text);
+  }
+  .diag-includes li::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    background: rgba(77,184,37,0.12);
+    border: 1px solid rgba(77,184,37,0.3);
+    border-radius: 50%;
+    margin-top: 2px;
+    background-image: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 5L4.5 7.5L8.5 2.5' stroke='%234db825' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .diag-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-width: 180px;
+  }
+
+  .btn-diag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--r4f-orange);
+    color: white;
+    border: none;
+    border-radius: 9px;
+    padding: 0.85rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-diag:hover {
+    background: #d96a15;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(240,120,32,0.30);
+  }
+
+  .diag-delivery {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--r4f-muted);
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* ══════════════════════════════════════════
+     SECCIÓN 2 — COACHING MENSUAL
+  ══════════════════════════════════════════ */
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+    align-items: start;
+  }
+
+  .plan-card {
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .plan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 32px rgba(0,0,0,0.18);
+  }
+  .plan-card.featured {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.22);
+  }
+  .plan-card.featured:hover {
+    transform: translateY(-10px);
+  }
+
+  /* ── HEADERS DE COLOR ── */
+  .plan-top {
+    padding: 1.8rem 1.4rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .plan-top::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -30px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+  }
+  .plan-top::before {
+    content: '';
+    position: absolute;
+    top: -20px; right: 20px;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Oro */
+  .plan-card.gold-card .plan-top {
+    background: linear-gradient(145deg, #5c3d00 0%, #c8941e 60%, #e8b830 100%);
+  }
+  .plan-card.gold-card .plan-icon { color: #ffe57a; }
+  .plan-card.gold-card .plan-tier { color: rgba(255,243,180,0.7); }
+  .plan-card.gold-card .plan-name { color: #fff8e0; }
+  .plan-card.gold-card .plan-price { color: #ffe57a; }
+  .plan-card.gold-card .plan-per  { color: rgba(255,243,180,0.65); }
+  .plan-card.gold-card .featured-badge {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.35);
+    color: #fff8e0;
+  }
+
+  /* Plata */
+  .plan-card.silver-card .plan-top {
+    background: linear-gradient(145deg, #1c3347 0%, #2e5a7a 60%, #4a8aaa 100%);
+  }
+  .plan-card.silver-card .plan-icon { color: #b0d8f0; }
+  .plan-card.silver-card .plan-tier { color: rgba(176,216,240,0.7); }
+  .plan-card.silver-card .plan-name { color: #daeef8; }
+  .plan-card.silver-card .plan-price { color: #b0d8f0; }
+  .plan-card.silver-card .plan-per  { color: rgba(176,216,240,0.65); }
+
+  /* Bronce */
+  .plan-card.bronze-card .plan-top {
+    background: linear-gradient(145deg, #4a2010 0%, #8a4828 60%, #b06030 100%);
+  }
+  .plan-card.bronze-card .plan-icon { color: #f5c090; }
+  .plan-card.bronze-card .plan-tier { color: rgba(245,192,144,0.7); }
+  .plan-card.bronze-card .plan-name { color: #fae0cc; }
+  .plan-card.bronze-card .plan-price { color: #f5c090; }
+  .plan-card.bronze-card .plan-per  { color: rgba(245,192,144,0.65); }
+
+  .plan-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    line-height: 1;
+  }
+  .plan-tier {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 0.35rem;
+  }
+  .plan-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.9rem;
+    line-height: 1.15;
+  }
+  .plan-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+  .plan-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    line-height: 1;
+    font-weight: 700;
+  }
+  .plan-price .dollar { font-size: 1.1rem; vertical-align: top; margin-top: 0.4rem; display: inline-block; }
+  .plan-per {
+    font-size: 0.75rem;
+    padding-bottom: 0.2rem;
+  }
+
+  /* ── FEATURES ── */
+  .plan-features {
+    padding: 1.25rem 1.4rem;
+    flex: 1;
+    background: #ffffff;
+    border-left: 1px solid var(--r4f-border);
+    border-right: 1px solid var(--r4f-border);
+  }
+  .plan-features ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--r4f-text);
+    line-height: 1.45;
+  }
+  .plan-features li .check {
+    font-size: 0.7rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .gold-card   .plan-features li .check { background: rgba(184,135,26,0.12); color: #9a6f10; }
+  .silver-card .plan-features li .check { background: rgba(74,127,160,0.12); color: #2e6080; }
+  .bronze-card .plan-features li .check { background: rgba(160,99,58,0.12);  color: #7a4020; }
+
+  /* ── FOOTER ── */
+  .plan-footer {
+    padding: 1rem 1.4rem 1.4rem;
+    background: #ffffff;
+    border-left: 1px solid var(--r4f-border);
+    border-right: 1px solid var(--r4f-border);
+    border-bottom: 1px solid var(--r4f-border);
+    border-radius: 0 0 16px 16px;
+  }
+  .btn-plan {
+    display: block;
+    text-align: center;
+    border: none;
+    border-radius: 9px;
+    padding: 0.75rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .gold-card   .btn-plan { background: linear-gradient(135deg, #7c5a00, #c8941e); color: white; }
+  .gold-card   .btn-plan:hover { background: linear-gradient(135deg, #5c3d00, #a87418); box-shadow: 0 4px 14px rgba(184,135,26,0.4); }
+  .silver-card .btn-plan { background: linear-gradient(135deg, #1c3347, #2e5a7a); color: white; }
+  .silver-card .btn-plan:hover { background: linear-gradient(135deg, #142535, #254d6a); box-shadow: 0 4px 14px rgba(46,90,122,0.4); }
+  .bronze-card .btn-plan { background: linear-gradient(135deg, #4a2010, #8a4828); color: white; }
+  .bronze-card .btn-plan:hover { background: linear-gradient(135deg, #3a1808, #703818); box-shadow: 0 4px 14px rgba(138,72,40,0.4); }
+
+  /* featured badge */
+  .featured-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    margin-bottom: 0.6rem;
+    border: 1px solid;
+  }
+
+  /* ══════════════════════════════════════════
+     SECCIÓN 3 — PROGRAMA ESPECIAL
+  ══════════════════════════════════════════ */
+  .special-card {
+    background: var(--r4f-card);
+    border: 1px solid var(--r4f-border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0;
+  }
+
+  .special-left {
+    padding: 1.5rem 1.75rem;
+    border-right: 1px solid var(--r4f-border);
+  }
+  .special-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(74,159,212,0.10);
+    border: 1px solid rgba(74,159,212,0.25);
+    color: var(--r4f-blue);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    margin-bottom: 0.75rem;
+  }
+  .special-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    color: var(--r4f-dark);
+    margin-bottom: 0.4rem;
+    line-height: 1.25;
+  }
+  .special-desc {
+    font-size: 0.82rem;
+    color: var(--r4f-muted);
+    margin-bottom: 1.1rem;
+    max-width: 420px;
+  }
+  .special-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .special-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    font-size: 0.82rem;
+    color: var(--r4f-text);
+  }
+  .special-features li .check { color: var(--r4f-blue); flex-shrink: 0; }
+
+  .special-right {
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    min-width: 180px;
+    background: #fafbfd;
+  }
+  .special-price-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--r4f-muted);
+  }
+  .special-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    color: var(--r4f-dark);
+    line-height: 1;
+  }
+  .special-price .dollar { font-size: 1rem; vertical-align: top; margin-top: 0.3rem; display: inline-block; }
+  .special-once {
+    font-size: 0.72rem;
+    color: var(--r4f-muted);
+    margin-top: -0.4rem;
+  }
+  .btn-special {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: var(--r4f-blue);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 0.7rem 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .btn-special:hover { background: #3888bd; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .section { padding: 2rem 1rem; }
+    .diag-header { flex-direction: column; }
+    .diag-price-box { text-align: left; }
+    .diag-body { grid-template-columns: 1fr; }
+    .diag-cta { flex-direction: row; flex-wrap: wrap; }
+    .plans-grid { grid-template-columns: 1fr; }
+    .special-card { grid-template-columns: 1fr; }
+    .special-right { border-right: none; border-top: 1px solid var(--r4f-border); flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 1 — DIAGNÓSTICO INICIAL
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Paso 1 · Antes de empezar</div>
+  <h2 class="section-title">Diagnóstico Inicial</h2>
+  <p class="section-desc">Conoce tu punto de partida real antes de invertir en un plan mensual. Análisis personalizado basado en tus datos de entrenamiento.</p>
+
+  <div class="diag-card">
+    <div class="diag-header">
+      <div class="diag-header-left">
+        <div class="diag-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Pago único · Sin suscripción
+        </div>
+        <div class="diag-title">Diagnóstico Inicial<br>del Corredor</div>
+        <div class="diag-subtitle">Running · Método Maffetone</div>
+      </div>
+      <div class="diag-price-box">
+        <div class="diag-price-label">Inversión</div>
+        <div class="diag-price"><span>$</span>15</div>
+      </div>
+    </div>
+
+    <div class="diag-body">
+      <div>
+        <div class="diag-includes-title">¿Qué incluye?</div>
+        <ul class="diag-includes">
+          <li>Análisis de logs de entrenamiento (últimos 6 meses)</li>
+          <li>Cálculo de carga mínima de entrenamiento</li>
+          <li>Zonas cardíacas personalizadas (Método Maffetone)</li>
+          <li>Umbrales de rendimiento aeróbico</li>
+          <li>Fortalezas y áreas de oportunidad</li>
+          <li>Entrega del reporte en 48 horas</li>
+        </ul>
+      </div>
+
+      <div class="diag-cta">
+        <a href="https://www.paypal.com/ncp/payment/SH45D334VS8YY" target="_blank" class="btn-diag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Contratar · $15
+        </a>
+        <div class="diag-delivery">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Entrega en 48 horas
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 2 — COACHING MENSUAL
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Coaching · Mensual</div>
+  <h2 class="section-title">Coaching Personalizado</h2>
+  <p class="section-desc">Planes mensuales con seguimiento continuo, plan de entrenamiento adaptado a tu ritmo de vida y acceso directo al entrenador.</p>
+
+  <div class="plans-grid">
+
+    <!-- ORO -->
+    <div class="plan-card featured gold-card">
+      <div class="plan-top">
+        <span class="plan-icon">🏆</span>
+        <div class="featured-badge">⭐ Más completo</div>
+        <div class="plan-tier gold">Oro</div>
+        <div class="plan-name">Plan Oro</div>
+        <div class="plan-price-row">
+          <div class="plan-price"><span class="dollar">$</span>100</div>
+          <div class="plan-per">/ mes</div>
+        </div>
+      </div>
+      <div class="plan-features">
+        <ul>
+          <li><span class="check">✓</span> Plan de entrenamiento semanal personalizado</li>
+          <li><span class="check">✓</span> Seguimiento diario por WhatsApp</li>
+          <li><span class="check">✓</span> Análisis de sesiones en Training Peaks</li>
+          <li><span class="check">✓</span> Ajustes de carga en tiempo real</li>
+          <li><span class="check">✓</span> Reporte mensual de progreso</li>
+          <li><span class="check">✓</span> Videollamada mensual de revisión</li>
+          <li><span class="check">✓</span> Estrategia de carrera y nutrición Maffetone</li>
+        </ul>
+      </div>
+      <div class="plan-footer">
+        <a href="https://www.paypal.com/ncp/payment/YYYMGF7VQY35U" target="_blank" class="btn-plan featured-btn">Contratar Plan Oro</a>
+      </div>
+    </div>
+
+    <!-- PLATA -->
+    <div class="plan-card silver-card">
+      <div class="plan-top">
+        <span class="plan-icon">🥈</span>
+        <div class="plan-tier silver">Plata</div>
+        <div class="plan-name">Plan Plata</div>
+        <div class="plan-price-row">
+          <div class="plan-price"><span class="dollar">$</span>80</div>
+          <div class="plan-per">/ mes</div>
+        </div>
+      </div>
+      <div class="plan-features">
+        <ul>
+          <li><span class="check">✓</span> Plan de entrenamiento semanal personalizado</li>
+          <li><span class="check">✓</span> Seguimiento por WhatsApp (3×/semana)</li>
+          <li><span class="check">✓</span> Análisis de sesiones en Training Peaks</li>
+          <li><span class="check">✓</span> Ajustes de carga semanales</li>
+          <li><span class="check">✓</span> Reporte mensual de progreso</li>
+          <li><span class="check">✓</span> Estrategia de carrera Maffetone</li>
+        </ul>
+      </div>
+      <div class="plan-footer">
+        <a href="https://www.paypal.com/ncp/payment/M23UG66KCX9X8" target="_blank" class="btn-plan">Contratar Plan Plata</a>
+      </div>
+    </div>
+
+    <!-- BRONCE -->
+    <div class="plan-card bronze-card">
+      <div class="plan-top">
+        <span class="plan-icon">🥉</span>
+        <div class="plan-tier">Bronce</div>
+        <div class="plan-name">Plan Bronce</div>
+        <div class="plan-price-row">
+          <div class="plan-price"><span class="dollar">$</span>65</div>
+          <div class="plan-per">/ mes</div>
+        </div>
+      </div>
+      <div class="plan-features">
+        <ul>
+          <li><span class="check">✓</span> Plan de entrenamiento semanal personalizado</li>
+          <li><span class="check">✓</span> Seguimiento por WhatsApp (1×/semana)</li>
+          <li><span class="check">✓</span> Reporte mensual de progreso</li>
+          <li><span class="check">✓</span> Ajustes de carga mensuales</li>
+          <li><span class="check">✓</span> Estrategia de carrera Maffetone</li>
+        </ul>
+      </div>
+      <div class="plan-footer">
+        <a href="https://www.paypal.com/ncp/payment/HTG2J9EMDJ3BE" target="_blank" class="btn-plan">Contratar Plan Bronce</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ══════════════════════════════════════════
+     SECCIÓN 3 — PROGRAMA ESPECIAL
+══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Programa Especial · Pago único</div>
+  <h2 class="section-title">Caminata Aeróbica</h2>
+  <p class="section-desc">Para quienes empiezan desde cero o regresan después de una pausa. Un programa de entrada amigable y efectivo.</p>
+
+  <div class="special-card">
+    <div class="special-left">
+      <div class="special-badge">
+        🚶 Programa de Iniciación
+      </div>
+      <div class="special-title">Programa Especial<br>Caminata Aeróbica</div>
+      <p class="special-desc">Diseñado para desarrollar la base aeróbica con caminata estructurada. Ideal para principiantes, personas en recuperación o con restricciones médicas.</p>
+      <ul class="special-features">
+        <li><span class="check">✓</span> Plan de caminata aeróbica de 8 semanas</li>
+        <li><span class="check">✓</span> Zonas de frecuencia cardíaca personalizadas</li>
+        <li><span class="check">✓</span> Guía de progresión paso a paso</li>
+        <li><span class="check">✓</span> Introducción al Método Maffetone</li>
+        <li><span class="check">✓</span> Soporte por WhatsApp durante el programa</li>
+      </ul>
+    </div>
+    <div class="special-right">
+      <div class="special-price-label">Inversión</div>
+      <div class="special-price"><span class="dollar">$</span>45</div>
+      <div class="special-once">Pago único</div>
+      <a href="https://www.paypal.com/ncp/payment/D5AF7P2VYNZQJ" target="_blank" class="btn-special">Contratar Programa</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
